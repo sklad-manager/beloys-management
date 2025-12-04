@@ -65,6 +65,4 @@ export default function InstallInstructions({ isOpen, onClose }: InstallInstruct
         </div>
     )
 }
-        </div >
-    );
-}
+
