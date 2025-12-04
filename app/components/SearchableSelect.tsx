@@ -61,7 +61,7 @@ export default function SearchableSelect({ label, options, value, onChange, plac
             </div>
 
             {isOpen && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
                     {/* Поле поиска */}
                     <div className="p-2 border-b border-gray-200">
                         <input
@@ -75,7 +75,7 @@ export default function SearchableSelect({ label, options, value, onChange, plac
                     </div>
 
                     {/* Список опций */}
-                    <div className="overflow-y-auto max-h-48">
+                    <div className="overflow-y-auto max-h-96">
                         {filteredOptions.length > 0 ? (
                             filteredOptions.map((option, index) => (
                                 <div
