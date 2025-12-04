@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Master {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  percentage  Float    @default(0) // Master's share percentage
+  orders      Order[]
+  salaryLogs  SalaryLog[]
+}
+
+model ReferenceItem {
+  id       Int    @id @default(autoincrement())
+  type     String // "BRAND", "SHOE_TYPE", "COLOR", "SERVICE"
+  value    String
+}
+
+model Order {
+  id              Int      @id @default(autoincrement()) // Internal ID
+  orderNumber     String   @unique // "000001"
+  createdAt       DateTime @default(now())
+  completedAt     DateTime?
+  
+  // Client Info
+  clientName      String
+  phone           String
+  
+  // Item Info
+  shoeType        String
+  brand           String
+  color           String
+  quantity        Int      @default(1)
+  services        String   // Comma separated or JSON
+  comment         String?
+  
+  // Financials
+  price           Float    // Total price to client
+  masterPrice     Float    // Base price for master calc
+  materialPrice   Float    // Material cost
+  
+  prepaymentCash      Float @default(0)
+  prepaymentTerminal  Float @default(0)
+  
+  paymentFullCash     Float @default(0)
+  paymentFullTerminal Float @default(0)
+  paymentDate         DateTime?
+  
+  // Relations
+  masterId        Int
+  master          Master @relation(fields: [masterId], references: [id])
+  
+  status          String   @default("Принят в работу") // "Принят в работу", "Выполнен", "Закрыт"
+}
+
+model SalaryLog {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @default(now())
+  amount      Float
+  isPaid      Boolean  @default(false)
+  paidAt      DateTime?
+  
+  masterId    Int
+  master      Master   @relation(fields: [masterId], references: [id])
+  
+  // Optional link to order if salary is per-order
+  orderId     Int?
+}
+
+model Expense {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @default(now())
+  category    String
+  amount      Float
+  paymentMethod String // "Cash", "Terminal"
+  comment     String?
+  responsible String?
+}
+
+model CashTransaction {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @default(now())
+  type        String   // "Income", "Expense"
+  category    String   // "Client Payment", "Master Salary", "Expense"
+  description String
+  amount      Float
+  method      String   // "Cash", "Terminal"
+  relatedEntity String? // Client Name or Master Name
+}
