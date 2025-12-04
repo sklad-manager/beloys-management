@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import CashPage from './components/CashPage';
 import InstallInstructions from './components/InstallInstructions';
+import OrderFormModal from './components/OrderFormModal';
 
 type MenuPage = 'menu' | 'expenses' | 'cash' | 'salary' | 'settings';
 
@@ -179,33 +180,26 @@ export default function Home() {
         </div>
 
         {/* Модальное окно для приема заказа */}
-        {showOrderModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowOrderModal(false)}>
-            <div className="bg-white rounded-xl p-6 max-w-2xl w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-              <div className="flex justify-between items-center mb-6">
-                <h2 className="text-xl font-bold text-slate-700">Принять заказ</h2>
-                <button onClick={() => setShowOrderModal(false)} className="text-gray-500 hover:text-gray-700">
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+        <OrderFormModal
+          isOpen={showOrderModal}
+          onClose={() => setShowOrderModal(false)}
+          onSubmit={async (orderData) => {
+            try {
+              const response = await fetch('/api/orders', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(orderData)
+              });
 
-              <div className="text-center py-8 text-gray-500">
-                Форма приема заказа будет добавлена позже
-              </div>
-
-              <div className="flex justify-end gap-3 mt-6">
-                <button
-                  onClick={() => setShowOrderModal(false)}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                >
-                  Закрыть
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
+              if (response.ok) {
+                setShowOrderModal(false);
+                loadOrders(); // Перезагрузить список заказов
+              }
+            } catch (error) {
+              console.error('Ошибка создания заказа:', error);
+            }
+          }}
+        />
 
         <InstallInstructions isOpen={showInstallModal} onClose={() => setShowInstallModal(false)} />
       </div>

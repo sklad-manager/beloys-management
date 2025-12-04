@@ -1,0 +1,98 @@
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+
+interface SearchableSelectProps {
+    label: string;
+    options: string[];
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+}
+
+export default function SearchableSelect({ label, options, value, onChange, placeholder }: SearchableSelectProps) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Фильтрация опций по поисковому запросу
+    const filteredOptions = options.filter(option =>
+        option.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    // Закрытие при клике вне компонента
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+                setSearchTerm('');
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleSelect = (option: string) => {
+        onChange(option);
+        setIsOpen(false);
+        setSearchTerm('');
+    };
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{label}:</label>
+
+            <div
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg cursor-pointer bg-white hover:border-blue-400 transition-colors flex justify-between items-center"
+            >
+                <span className={value ? 'text-slate-900' : 'text-gray-400'}>
+                    {value || placeholder || 'Выберите...'}
+                </span>
+                <svg
+                    className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+            </div>
+
+            {isOpen && (
+                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                    {/* Поле поиска */}
+                    <div className="p-2 border-b border-gray-200">
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Поиск..."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>
+
+                    {/* Список опций */}
+                    <div className="overflow-y-auto max-h-48">
+                        {filteredOptions.length > 0 ? (
+                            filteredOptions.map((option, index) => (
+                                <div
+                                    key={index}
+                                    onClick={() => handleSelect(option)}
+                                    className={`px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors ${value === option ? 'bg-blue-100 text-blue-700 font-medium' : 'text-slate-700'
+                                        }`}
+                                >
+                                    {option}
+                                </div>
+                            ))
+                        ) : (
+                            <div className="px-3 py-2 text-gray-500 text-center">Ничего не найдено</div>
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}

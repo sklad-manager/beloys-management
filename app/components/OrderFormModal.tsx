@@ -1,431 +1,240 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import SearchableSelect from './SearchableSelect';
+import { SHOE_TYPES, BRANDS, COLORS, SERVICES } from '../data/references';
 
 interface OrderFormModalProps {
     isOpen: boolean;
     onClose: () => void;
+    onSubmit: (orderData: any) => void;
 }
 
-interface Master {
-    id: number;
+interface Service {
+    id: string;
     name: string;
-    percentage: number;
 }
 
-interface ReferenceItem {
-    id: number;
-    type: string;
-    value: string;
-}
-
-export default function OrderFormModal({ isOpen, onClose }: OrderFormModalProps) {
+export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormModalProps) {
     const [formData, setFormData] = useState({
-        clientName: '',
+        client: '',
         phone: '',
-        quantity: 1,
+        shoeCount: '1',
         shoeType: '',
         brand: '',
         color: '',
-        services: [] as string[],
-        masterId: '',
-        masterPrice: 0,
-        materialPrice: 0,
-        price: 0,
-        prepayment: 0,
-        paymentMethod: '',
-        status: 'Принят в работу',
-        comment: '',
+        comment: ''
     });
 
-    const [masters, setMasters] = useState<Master[]>([]);
-    const [references, setReferences] = useState<ReferenceItem[]>([]);
-    const [currentService, setCurrentService] = useState('');
+    const [services, setServices] = useState<Service[]>([{ id: '1', name: '' }]);
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchMasters();
-            fetchReferences();
-        }
-    }, [isOpen]);
-
-    // Calculate total price when master price or material price changes
-    useEffect(() => {
-        const total = formData.masterPrice + formData.materialPrice;
-        setFormData(prev => ({ ...prev, price: total }));
-    }, [formData.masterPrice, formData.materialPrice]);
-
-    const fetchMasters = async () => {
-        try {
-            const response = await fetch('/api/masters');
-            const data = await response.json();
-            setMasters(data);
-        } catch (error) {
-            console.error('Error fetching masters:', error);
-        }
+    const handleInputChange = (field: string, value: string) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
     };
 
-    const fetchReferences = async () => {
-        try {
-            const response = await fetch('/api/references');
-            const data = await response.json();
-            setReferences(data);
-        } catch (error) {
-            console.error('Error fetching references:', error);
-        }
-    };
-
-    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({
-            ...prev,
-            [name]: name === 'quantity' || name === 'masterPrice' || name === 'materialPrice' || name === 'prepayment'
-                ? parseFloat(value) || 0
-                : value,
-        }));
+    const handleServiceChange = (id: string, value: string) => {
+        setServices(prev =>
+            prev.map(service => (service.id === id ? { ...service, name: value } : service))
+        );
     };
 
     const addService = () => {
-        if (currentService.trim()) {
-            setFormData(prev => ({
-                ...prev,
-                services: [...prev.services, currentService.trim()],
-            }));
-            setCurrentService('');
+        const newId = (Math.max(...services.map(s => parseInt(s.id))) + 1).toString();
+        setServices(prev => [...prev, { id: newId, name: '' }]);
+    };
+
+    const removeService = (id: string) => {
+        if (services.length > 1) {
+            setServices(prev => prev.filter(service => service.id !== id));
         }
     };
 
-    const removeService = (index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            services: prev.services.filter((_, i) => i !== index),
-        }));
-    };
-
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
-        try {
-            const response = await fetch('/api/orders', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    ...formData,
-                    services: formData.services.join(', '),
-                    masterId: parseInt(formData.masterId),
-                }),
-            });
+        const orderData = {
+            ...formData,
+            services: services.filter(s => s.name).map(s => s.name),
+            dateReceived: new Date().toISOString(),
+        };
 
-            if (response.ok) {
-                alert('Заказ успешно добавлен!');
-                onClose();
-                // Reset form
-                setFormData({
-                    clientName: '',
-                    phone: '',
-                    quantity: 1,
-                    shoeType: '',
-                    brand: '',
-                    color: '',
-                    services: [],
-                    masterId: '',
-                    masterPrice: 0,
-                    materialPrice: 0,
-                    price: 0,
-                    prepayment: 0,
-                    paymentMethod: '',
-                    status: 'Принят в работу',
-                    comment: '',
-                });
-            } else {
-                alert('Ошибка при добавлении заказа');
-            }
-        } catch (error) {
-            console.error('Error submitting order:', error);
-            alert('Ошибка при добавлении заказа');
-        }
+        onSubmit(orderData);
+
+        // Сброс формы
+        setFormData({
+            client: '',
+            phone: '',
+            shoeCount: '1',
+            shoeType: '',
+            brand: '',
+            color: '',
+            comment: ''
+        });
+        setServices([{ id: '1', name: '' }]);
     };
 
     if (!isOpen) return null;
 
-    const getRefByType = (type: string) => references.filter(r => r.type === type);
-
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-white border-b px-6 py-4 flex justify-between items-center">
-                    <h2 className="text-2xl font-bold">Добавить новый заказ</h2>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-500 hover:text-gray-700 text-2xl leading-none"
-                    >
-                        ×
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto" onClick={onClose}>
+            <div className="bg-white rounded-xl w-full max-w-3xl shadow-2xl my-8" onClick={(e) => e.stopPropagation()}>
+                {/* Заголовок */}
+                <div className="flex justify-between items-center p-6 border-b border-gray-200">
+                    <h2 className="text-2xl font-bold text-slate-700">Новый заказ</h2>
+                    <button onClick={onClose} className="text-gray-500 hover:text-gray-700 transition-colors">
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                    <h3 className="text-xl font-semibold text-center mb-4">Новый заказ</h3>
-
-                    {/* Client Info */}
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Клиент:</label>
-                        <input
-                            type="text"
-                            name="clientName"
-                            value={formData.clientName}
-                            onChange={handleInputChange}
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Телефон:</label>
-                        <input
-                            type="tel"
-                            name="phone"
-                            value={formData.phone}
-                            onChange={handleInputChange}
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
-                    </div>
-
-                    {/* Shoe Info */}
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Количество обуви:</label>
-                        <input
-                            type="number"
-                            name="quantity"
-                            value={formData.quantity}
-                            onChange={handleInputChange}
-                            min="1"
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Вид обуви:</label>
-                        <input
-                            type="text"
-                            name="shoeType"
-                            value={formData.shoeType}
-                            onChange={handleInputChange}
-                            list="shoeTypes"
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
-                        <datalist id="shoeTypes">
-                            {getRefByType('SHOE_TYPE').map(item => (
-                                <option key={item.id} value={item.value} />
-                            ))}
-                        </datalist>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Бренд:</label>
-                        <input
-                            type="text"
-                            name="brand"
-                            value={formData.brand}
-                            onChange={handleInputChange}
-                            list="brands"
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
-                        <datalist id="brands">
-                            {getRefByType('BRAND').map(item => (
-                                <option key={item.id} value={item.value} />
-                            ))}
-                        </datalist>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Цвет:</label>
-                        <input
-                            type="text"
-                            name="color"
-                            value={formData.color}
-                            onChange={handleInputChange}
-                            list="colors"
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
-                        <datalist id="colors">
-                            {getRefByType('COLOR').map(item => (
-                                <option key={item.id} value={item.value} />
-                            ))}
-                        </datalist>
-                    </div>
-
-                    {/* Services */}
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Услуги:</label>
-                        <div className="flex gap-2 mb-2">
+                {/* Форма */}
+                <form onSubmit={handleSubmit} className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Клиент */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Клиент:</label>
                             <input
                                 type="text"
-                                value={currentService}
-                                onChange={(e) => setCurrentService(e.target.value)}
-                                list="services"
-                                className="flex-1 border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Введите услугу"
+                                value={formData.client}
+                                onChange={(e) => handleInputChange('client', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                required
                             />
-                            <datalist id="services">
-                                {getRefByType('SERVICE').map(item => (
-                                    <option key={item.id} value={item.value} />
-                                ))}
-                            </datalist>
                         </div>
-                        <button
-                            type="button"
-                            onClick={addService}
-                            className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 transition"
-                        >
-                            + Добавить услугу
-                        </button>
-                        {formData.services.length > 0 && (
-                            <div className="mt-2 space-y-1">
-                                {formData.services.map((service, index) => (
-                                    <div key={index} className="flex justify-between items-center bg-gray-100 px-3 py-2 rounded">
-                                        <span>{service}</span>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeService(index)}
-                                            className="text-red-500 hover:text-red-700"
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
 
-                    {/* Master */}
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Мастер:</label>
-                        <select
-                            name="masterId"
-                            value={formData.masterId}
-                            onChange={handleInputChange}
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        >
-                            <option value="">Выберите мастера</option>
-                            {masters.map(master => (
-                                <option key={master.id} value={master.id}>
-                                    {master.name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Pricing */}
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Цена мастера (грн.):</label>
-                        <input
-                            type="number"
-                            name="masterPrice"
-                            value={formData.masterPrice}
-                            onChange={handleInputChange}
-                            min="0"
-                            step="0.01"
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Цена материалов (грн.):</label>
-                        <input
-                            type="number"
-                            name="materialPrice"
-                            value={formData.materialPrice}
-                            onChange={handleInputChange}
-                            min="0"
-                            step="0.01"
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            required
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Итоговая цена (грн.):</label>
-                        <input
-                            type="number"
-                            name="price"
-                            value={formData.price}
-                            readOnly
-                            className="w-full border border-gray-300 rounded px-3 py-2 bg-gray-100"
-                        />
-                    </div>
-
-                    {/* Payment */}
-                    <div className="grid grid-cols-2 gap-4">
+                        {/* Телефон */}
                         <div>
-                            <label className="block text-sm font-medium mb-1">Предоплата (грн.):</label>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Телефон:</label>
+                            <input
+                                type="tel"
+                                value={formData.phone}
+                                onChange={(e) => handleInputChange('phone', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                required
+                            />
+                        </div>
+
+                        {/* Количество обуви */}
+                        <div>
+                            <label className="block text-sm font-medium text-slate-700 mb-1">Количество обуви:</label>
                             <input
                                 type="number"
-                                name="prepayment"
-                                value={formData.prepayment}
-                                onChange={handleInputChange}
-                                min="0"
-                                step="0.01"
-                                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                min="1"
+                                value={formData.shoeCount}
+                                onChange={(e) => handleInputChange('shoeCount', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                required
                             />
                         </div>
+
+                        {/* Вид обуви */}
                         <div>
-                            <label className="block text-sm font-medium mb-1">Способ оплаты:</label>
-                            <select
-                                name="paymentMethod"
-                                value={formData.paymentMethod}
-                                onChange={handleInputChange}
-                                className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            >
-                                <option value="">Выберите способ</option>
-                                <option value="cash">Наличные</option>
-                                <option value="terminal">Терминал</option>
-                            </select>
+                            <SearchableSelect
+                                label="Вид обуви"
+                                options={SHOE_TYPES}
+                                value={formData.shoeType}
+                                onChange={(value) => handleInputChange('shoeType', value)}
+                                placeholder="Выберите вид обуви"
+                            />
+                        </div>
+
+                        {/* Бренд */}
+                        <div>
+                            <SearchableSelect
+                                label="Бренд"
+                                options={BRANDS}
+                                value={formData.brand}
+                                onChange={(value) => handleInputChange('brand', value)}
+                                placeholder="Выберите бренд"
+                            />
+                        </div>
+
+                        {/* Цвет */}
+                        <div>
+                            <SearchableSelect
+                                label="Цвет"
+                                options={COLORS}
+                                value={formData.color}
+                                onChange={(value) => handleInputChange('color', value)}
+                                placeholder="Выберите цвет"
+                            />
                         </div>
                     </div>
 
-                    {/* Status */}
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Статус заказа:</label>
-                        <select
-                            name="status"
-                            value={formData.status}
-                            onChange={handleInputChange}
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="Принят в работу">Принят в работу</option>
-                            <option value="Выполнен">Выполнен</option>
-                            <option value="Закрыт">Закрыт</option>
-                        </select>
+                    {/* Услуги */}
+                    <div className="mt-6">
+                        <div className="flex justify-between items-center mb-3">
+                            <label className="block text-sm font-medium text-slate-700">Услуги:</label>
+                            <button
+                                type="button"
+                                onClick={addService}
+                                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm flex items-center gap-2"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                                Добавить услугу
+                            </button>
+                        </div>
+
+                        <div className="space-y-3">
+                            {services.map((service) => (
+                                <div key={service.id} className="flex gap-2">
+                                    <div className="flex-1">
+                                        <SearchableSelect
+                                            label=""
+                                            options={SERVICES}
+                                            value={service.name}
+                                            onChange={(value) => handleServiceChange(service.id, value)}
+                                            placeholder="Выберите услугу"
+                                        />
+                                    </div>
+                                    {services.length > 1 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => removeService(service.id)}
+                                            className="px-3 py-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors self-end"
+                                            title="Удалить услугу"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
                     </div>
 
-                    {/* Comments */}
-                    <div>
-                        <label className="block text-sm font-medium mb-1">Комментарии:</label>
+                    {/* Комментарий */}
+                    <div className="mt-6">
+                        <label className="block text-sm font-medium text-slate-700 mb-1">Комментарий:</label>
                         <textarea
-                            name="comment"
                             value={formData.comment}
-                            onChange={handleInputChange}
+                            onChange={(e) => handleInputChange('comment', e.target.value)}
                             rows={3}
-                            className="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                            placeholder="Дополнительная информация..."
                         />
                     </div>
 
-                    {/* Submit Button */}
-                    <button
-                        type="submit"
-                        className="w-full bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition font-semibold"
-                    >
-                        Добавить заказ
-                    </button>
+                    {/* Кнопки */}
+                    <div className="flex justify-end gap-3 mt-6 pt-6 border-t border-gray-200">
+                        <button
+                            type="button"
+                            onClick={onClose}
+                            className="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium"
+                        >
+                            Отмена
+                        </button>
+                        <button
+                            type="submit"
+                            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        >
+                            Принять заказ
+                        </button>
+                    </div>
                 </form>
             </div>
         </div>
