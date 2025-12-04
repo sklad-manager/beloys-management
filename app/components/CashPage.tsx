@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import * as XLSX from 'xlsx';
 
 interface Transaction {
     id: number;
@@ -226,6 +227,112 @@ export default function CashPage() {
         setReportData({ transactions: filtered, summary });
         setShowDateSelectionModal(false);
         setShowReportModal(true);
+    };
+
+    // Печать отчета
+    const handlePrintReport = () => {
+        const printContent = document.getElementById('report-content');
+        if (!printContent) return;
+
+        const windowUrl = 'about:blank';
+        const uniqueName = new Date();
+        const windowName = 'Print' + uniqueName.getTime();
+        const printWindow = window.open(windowUrl, windowName, 'left=50000,top=50000,width=0,height=0');
+
+        if (printWindow) {
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Отчет по кассе</title>
+                        <style>
+                            body { font-family: sans-serif; padding: 20px; }
+                            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                            th { background-color: #f3f4f6; }
+                            .summary { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+                            .summary-item { text-align: center; padding: 10px; background: #f9fafb; border-radius: 8px; }
+                            .income { color: #16a34a; font-weight: bold; }
+                            .expense { color: #dc2626; font-weight: bold; }
+                            .header { margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h2>Отчет по кассе</h2>
+                            <p>${reportConfig.type === 'date'
+                    ? new Date(reportConfig.date).toLocaleDateString('ru-RU')
+                    : `${new Date(reportConfig.startDate).toLocaleDateString('ru-RU')} - ${new Date(reportConfig.endDate).toLocaleDateString('ru-RU')}`
+                }</p>
+                        </div>
+                        ${printContent.innerHTML}
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        }
+    };
+
+    // Экспорт в Excel
+    const handleExportExcel = () => {
+        const wb = XLSX.utils.book_new();
+
+        // Подготовка данных
+        const data = reportData.transactions.map(t => ({
+            'Дата': new Date(t.date).toLocaleDateString('ru-RU'),
+            'Тип': t.type === 'Income' ? 'Приход' : 'Расход',
+            'Способ': t.method === 'Cash' ? 'Наличные' : 'Безнал',
+            'Категория': t.category,
+            'Описание': t.description,
+            'Сумма': t.amount
+        }));
+
+        // Добавление итогов
+        data.push({} as any); // Пустая строка
+        data.push({
+            'Дата': 'ИТОГО ПРИХОД:',
+            'Тип': '',
+            'Способ': '',
+            'Категория': '',
+            'Описание': '',
+            'Сумма': reportData.summary.income
+        } as any);
+        data.push({
+            'Дата': 'ИТОГО РАСХОД:',
+            'Тип': '',
+            'Способ': '',
+            'Категория': '',
+            'Описание': '',
+            'Сумма': reportData.summary.expense
+        } as any);
+        data.push({
+            'Дата': 'САЛЬДО:',
+            'Тип': '',
+            'Способ': '',
+            'Категория': '',
+            'Описание': '',
+            'Сумма': reportData.summary.income - reportData.summary.expense
+        } as any);
+
+        const ws = XLSX.utils.json_to_sheet(data);
+
+        // Настройка ширины колонок
+        const wscols = [
+            { wch: 12 }, // Дата
+            { wch: 10 }, // Тип
+            { wch: 12 }, // Способ
+            { wch: 20 }, // Категория
+            { wch: 40 }, // Описание
+            { wch: 15 }  // Сумма
+        ];
+        ws['!cols'] = wscols;
+
+        XLSX.utils.book_append_sheet(wb, ws, "Отчет");
+
+        const fileName = `Otchet_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, fileName);
     };
 
     if (loading) {
@@ -604,81 +711,103 @@ export default function CashPage() {
                                     }
                                 </p>
                             </div>
-                            <button onClick={() => setShowReportModal(false)} className="text-gray-500 hover:text-gray-700">
-                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={handlePrintReport}
+                                    className="text-gray-500 hover:text-blue-600 transition-colors p-1"
+                                    title="Печать"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                                    </svg>
+                                </button>
+                                <button
+                                    onClick={handleExportExcel}
+                                    className="text-gray-500 hover:text-green-600 transition-colors p-1"
+                                    title="Скачать Excel"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                </button>
+                                <button onClick={() => setShowReportModal(false)} className="text-gray-500 hover:text-gray-700 p-1">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="p-6 bg-blue-50 grid grid-cols-3 gap-4 border-b">
-                            <div className="text-center">
-                                <div className="text-xs text-gray-500 uppercase">Приход</div>
-                                <div className="text-lg font-bold text-green-600">+{reportData.summary.income.toFixed(2)} ₴</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-xs text-gray-500 uppercase">Расход</div>
-                                <div className="text-lg font-bold text-red-600">-{reportData.summary.expense.toFixed(2)} ₴</div>
-                            </div>
-                            <div className="text-center">
-                                <div className="text-xs text-gray-500 uppercase">Итог</div>
-                                <div className={`text-lg font-bold ${reportData.summary.income - reportData.summary.expense >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {(reportData.summary.income - reportData.summary.expense) > 0 ? '+' : ''}
-                                    {(reportData.summary.income - reportData.summary.expense).toFixed(2)} ₴
+                        <div id="report-content" className="flex flex-col flex-1 overflow-hidden">
+                            <div className="p-6 bg-blue-50 grid grid-cols-3 gap-4 border-b shrink-0">
+                                <div className="text-center summary-item">
+                                    <div className="text-xs text-gray-500 uppercase">Приход</div>
+                                    <div className="text-lg font-bold text-green-600 income">+{reportData.summary.income.toFixed(2)} ₴</div>
+                                </div>
+                                <div className="text-center summary-item">
+                                    <div className="text-xs text-gray-500 uppercase">Расход</div>
+                                    <div className="text-lg font-bold text-red-600 expense">-{reportData.summary.expense.toFixed(2)} ₴</div>
+                                </div>
+                                <div className="text-center summary-item">
+                                    <div className="text-xs text-gray-500 uppercase">Итог</div>
+                                    <div className={`text-lg font-bold ${reportData.summary.income - reportData.summary.expense >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        {(reportData.summary.income - reportData.summary.expense) > 0 ? '+' : ''}
+                                        {(reportData.summary.income - reportData.summary.expense).toFixed(2)} ₴
+                                    </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div className="overflow-y-auto p-0 flex-1">
-                            {reportData.transactions.length === 0 ? (
-                                <div className="p-8 text-center text-gray-500">
-                                    Нет операций за выбранный период
-                                </div>
-                            ) : (
-                                <table className="w-full">
-                                    <thead className="bg-gray-100 border-b sticky top-0">
-                                        <tr>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Дата</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Тип</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Способ</th>
-                                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Описание</th>
-                                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Сумма</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-gray-200">
-                                        {reportData.transactions.map((transaction) => (
-                                            <tr key={transaction.id} className="hover:bg-gray-50 transition-colors">
-                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                                    {new Date(transaction.date).toLocaleDateString('ru-RU')}
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${transaction.type === 'Income'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
-                                                        }`}>
-                                                        {transaction.type === 'Income' ? '↑ Приход' : '↓ Расход'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 whitespace-nowrap">
-                                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${transaction.method === 'Cash'
-                                                        ? 'bg-yellow-100 text-yellow-800'
-                                                        : 'bg-blue-100 text-blue-800'
-                                                        }`}>
-                                                        {transaction.method === 'Cash' ? '💵 Нал' : '💳 Безнал'}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4 text-sm text-gray-900">
-                                                    {transaction.description}
-                                                </td>
-                                                <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold text-right ${transaction.type === 'Income' ? 'text-green-600' : 'text-red-600'
-                                                    }`}>
-                                                    {transaction.type === 'Income' ? '+' : '-'}{transaction.amount.toFixed(2)} ₴
-                                                </td>
+                            <div className="overflow-y-auto p-0 flex-1">
+                                {reportData.transactions.length === 0 ? (
+                                    <div className="p-8 text-center text-gray-500">
+                                        Нет операций за выбранный период
+                                    </div>
+                                ) : (
+                                    <table className="w-full">
+                                        <thead className="bg-gray-100 border-b sticky top-0">
+                                            <tr>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Дата</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Тип</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Способ</th>
+                                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase tracking-wider">Описание</th>
+                                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-700 uppercase tracking-wider">Сумма</th>
                                             </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            )}
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-200">
+                                            {reportData.transactions.map((transaction) => (
+                                                <tr key={transaction.id} className="hover:bg-gray-50 transition-colors">
+                                                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                        {new Date(transaction.date).toLocaleDateString('ru-RU')}
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${transaction.type === 'Income'
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-red-100 text-red-800'
+                                                            }`}>
+                                                            {transaction.type === 'Income' ? '↑ Приход' : '↓ Расход'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 whitespace-nowrap">
+                                                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${transaction.method === 'Cash'
+                                                            ? 'bg-yellow-100 text-yellow-800'
+                                                            : 'bg-blue-100 text-blue-800'
+                                                            }`}>
+                                                            {transaction.method === 'Cash' ? '💵 Нал' : '💳 Безнал'}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-6 py-4 text-sm text-gray-900">
+                                                        {transaction.description}
+                                                    </td>
+                                                    <td className={`px-6 py-4 whitespace-nowrap text-sm font-semibold text-right ${transaction.type === 'Income' ? 'text-green-600' : 'text-red-600'
+                                                        }`}>
+                                                        {transaction.type === 'Income' ? '+' : '-'}{transaction.amount.toFixed(2)} ₴
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                )}
+                            </div>
                         </div>
 
                         <div className="p-4 border-t bg-gray-50">
