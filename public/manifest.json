@@ -1,6 +1,6 @@
 {
-    "name": "Beloys - Управление мастерской",
-    "short_name": "Beloys",
+    "name": "Belous - Управление мастерской",
+    "short_name": "Belous",
     "description": "Система управления мастерской по ремонту обуви",
     "start_url": "/",
     "display": "standalone",
