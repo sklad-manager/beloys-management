@@ -39,6 +39,13 @@ export default function CashPage() {
         date: new Date().toISOString().split('T')[0],
     });
 
+    // Состояние для инвентаризации
+    const [showInventoryModal, setShowInventoryModal] = useState(false);
+    const [inventoryData, setInventoryData] = useState({
+        actualCash: '',
+        actualTerminal: ''
+    });
+
     // Загрузка транзакций
     useEffect(() => {
         loadTransactions();
@@ -115,6 +122,69 @@ export default function CashPage() {
         }
     };
 
+    // Обработка инвентаризации
+    const handleInventorySubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        const actualCash = parseFloat(inventoryData.actualCash || '0');
+        const actualTerminal = parseFloat(inventoryData.actualTerminal || '0');
+
+        const diffCash = actualCash - balances.cashBalance;
+        const diffTerminal = actualTerminal - balances.terminalBalance;
+
+        if (diffCash === 0 && diffTerminal === 0) {
+            alert('Расхождений не найдено');
+            setShowInventoryModal(false);
+            return;
+        }
+
+        try {
+            const promises = [];
+
+            // Корректировка наличных
+            if (diffCash !== 0) {
+                promises.push(fetch('/api/cash', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        date: new Date().toISOString().split('T')[0],
+                        type: diffCash > 0 ? 'Income' : 'Expense',
+                        category: 'Инвентаризация',
+                        description: `Инвентаризация (Нал). Факт: ${actualCash}. Разница: ${diffCash > 0 ? '+' : ''}${diffCash.toFixed(2)}`,
+                        amount: Math.abs(diffCash),
+                        method: 'Cash',
+                    }),
+                }));
+            }
+
+            // Корректировка безнала
+            if (diffTerminal !== 0) {
+                promises.push(fetch('/api/cash', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        date: new Date().toISOString().split('T')[0],
+                        type: diffTerminal > 0 ? 'Income' : 'Expense',
+                        category: 'Инвентаризация',
+                        description: `Инвентаризация (Безнал). Факт: ${actualTerminal}. Разница: ${diffTerminal > 0 ? '+' : ''}${diffTerminal.toFixed(2)}`,
+                        amount: Math.abs(diffTerminal),
+                        method: 'Terminal',
+                    }),
+                }));
+            }
+
+            await Promise.all(promises);
+            await loadTransactions();
+            setShowInventoryModal(false);
+            setInventoryData({ actualCash: '', actualTerminal: '' });
+            alert('Инвентаризация проведена успешно. Баланс скорректирован.');
+
+        } catch (error) {
+            console.error('Ошибка инвентаризации:', error);
+            alert('Ошибка при проведении инвентаризации');
+        }
+    };
+
     if (loading) {
         return <div className="p-6">Загрузка...</div>;
     }
@@ -129,7 +199,18 @@ export default function CashPage() {
 
     return (
         <div className="p-6 max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold mb-6">Касса</h1>
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold">Касса</h1>
+                <button
+                    onClick={() => setShowInventoryModal(true)}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2 shadow-md"
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    Инвентаризация
+                </button>
+            </div>
 
             {/* Панель баланса */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -314,5 +395,71 @@ export default function CashPage() {
                 )}
             </div>
         </div>
+
+            {/* Модальное окно инвентаризации */ }
+    {
+        showInventoryModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowInventoryModal(false)}>
+                <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-bold">Инвентаризация</h2>
+                        <button onClick={() => setShowInventoryModal(false)} className="text-gray-500 hover:text-gray-700">
+                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <form onSubmit={handleInventorySubmit} className="space-y-4">
+                        <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                            <p className="text-sm text-blue-800 mb-2">Текущий расчетный баланс:</p>
+                            <div className="flex justify-between text-sm">
+                                <span>Наличные:</span>
+                                <span className="font-bold">{balances.cashBalance.toFixed(2)} ₴</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span>Безнал:</span>
+                                <span className="font-bold">{balances.terminalBalance.toFixed(2)} ₴</span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Наличные (фактический остаток)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={inventoryData.actualCash}
+                                onChange={(e) => setInventoryData({ ...inventoryData, actualCash: e.target.value })}
+                                placeholder="Введите сумму в кассе"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                required
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm font-medium mb-2">Безналичные (фактический остаток)</label>
+                            <input
+                                type="number"
+                                step="0.01"
+                                value={inventoryData.actualTerminal}
+                                onChange={(e) => setInventoryData({ ...inventoryData, actualTerminal: e.target.value })}
+                                placeholder="Введите сумму на счетах"
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                required
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium mt-4"
+                        >
+                            Подтвердить и выровнять баланс
+                        </button>
+                    </form>
+                </div>
+            </div>
+        )
+    }
+        </div >
     );
 }
