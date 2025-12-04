@@ -46,6 +46,21 @@ export default function CashPage() {
         actualTerminal: ''
     });
 
+    // Состояние фильтрации
+    const [showFilterModal, setShowFilterModal] = useState(false);
+    const [filterConfig, setFilterConfig] = useState({
+        type: 'all' as 'all' | 'date' | 'period',
+        date: new Date().toISOString().split('T')[0],
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
+    });
+    const [appliedFilter, setAppliedFilter] = useState({
+        type: 'all' as 'all' | 'date' | 'period',
+        date: new Date().toISOString().split('T')[0],
+        startDate: new Date().toISOString().split('T')[0],
+        endDate: new Date().toISOString().split('T')[0],
+    });
+
     // Загрузка транзакций
     useEffect(() => {
         loadTransactions();
@@ -185,13 +200,53 @@ export default function CashPage() {
         }
     };
 
+    // Применение фильтра
+    const handleApplyFilter = () => {
+        setAppliedFilter(filterConfig);
+        setShowFilterModal(false);
+    };
+
+    // Сброс фильтра
+    const handleResetFilter = () => {
+        const today = new Date().toISOString().split('T')[0];
+        const resetConfig = {
+            type: 'all' as const,
+            date: today,
+            startDate: today,
+            endDate: today,
+        };
+        setFilterConfig(resetConfig);
+        setAppliedFilter(resetConfig);
+        setShowFilterModal(false);
+    };
+
     if (loading) {
         return <div className="p-6">Загрузка...</div>;
     }
 
+    // Фильтрация транзакций
+    const filteredTransactions = transactions.filter(t => {
+        if (appliedFilter.type === 'all') return true;
+        const tDate = t.date.split('T')[0];
+        if (appliedFilter.type === 'date') {
+            return tDate === appliedFilter.date;
+        }
+        if (appliedFilter.type === 'period') {
+            return tDate >= appliedFilter.startDate && tDate <= appliedFilter.endDate;
+        }
+        return true;
+    });
+
+    // Расчет итогов за период
+    const periodSummary = filteredTransactions.reduce((acc, t) => {
+        if (t.type === 'Income') acc.income += t.amount;
+        else acc.expense += t.amount;
+        return acc;
+    }, { income: 0, expense: 0 });
+
     // Сортировка транзакций (новые сверху)
     // Сначала по дате, затем по ID для транзакций с одинаковой датой
-    const sortedTransactions = [...transactions].sort((a, b) => {
+    const sortedTransactions = [...filteredTransactions].sort((a, b) => {
         const dateCompare = new Date(b.date).getTime() - new Date(a.date).getTime();
         if (dateCompare !== 0) return dateCompare;
         return b.id - a.id; // Если даты одинаковые, сортируем по ID (новые сверху)
@@ -209,6 +264,15 @@ export default function CashPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                     </svg>
                     Инвентаризация
+                </button>
+                <button
+                    onClick={() => setShowFilterModal(true)}
+                    className={`ml-2 px-4 py-2 rounded-lg transition-colors flex items-center gap-2 shadow-md ${appliedFilter.type !== 'all' ? 'bg-blue-600 text-white hover:bg-blue-700' : 'bg-white text-gray-700 hover:bg-gray-50'}`}
+                >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    {appliedFilter.type === 'all' ? 'Фильтр' : 'Фильтр (активен)'}
                 </button>
             </div>
 
@@ -338,9 +402,38 @@ export default function CashPage() {
 
             {/* История транзакций */}
             <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                <div className="px-6 py-4 bg-gray-50 border-b">
+                <div className="px-6 py-4 bg-gray-50 border-b flex justify-between items-center">
                     <h2 className="text-xl font-bold">История операций</h2>
+                    {appliedFilter.type !== 'all' && (
+                        <div className="text-sm text-gray-500">
+                            {appliedFilter.type === 'date'
+                                ? `За дату: ${new Date(appliedFilter.date).toLocaleDateString('ru-RU')}`
+                                : `Период: ${new Date(appliedFilter.startDate).toLocaleDateString('ru-RU')} - ${new Date(appliedFilter.endDate).toLocaleDateString('ru-RU')}`
+                            }
+                        </div>
+                    )}
                 </div>
+
+                {/* Итоги за период (если фильтр активен) */}
+                {appliedFilter.type !== 'all' && (
+                    <div className="grid grid-cols-3 gap-4 p-4 bg-blue-50 border-b">
+                        <div className="text-center">
+                            <div className="text-xs text-gray-500 uppercase">Приход</div>
+                            <div className="text-lg font-bold text-green-600">+{periodSummary.income.toFixed(2)} ₴</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-xs text-gray-500 uppercase">Расход</div>
+                            <div className="text-lg font-bold text-red-600">-{periodSummary.expense.toFixed(2)} ₴</div>
+                        </div>
+                        <div className="text-center">
+                            <div className="text-xs text-gray-500 uppercase">Итог</div>
+                            <div className={`text-lg font-bold ${periodSummary.income - periodSummary.expense >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                {(periodSummary.income - periodSummary.expense) > 0 ? '+' : ''}
+                                {(periodSummary.income - periodSummary.expense).toFixed(2)} ₴
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {sortedTransactions.length === 0 ? (
                     <div className="p-8 text-center text-gray-500">
@@ -460,6 +553,98 @@ export default function CashPage() {
                     </div>
                 )
             }
+
+            {/* Модальное окно фильтрации */}
+            {showFilterModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowFilterModal(false)}>
+                    <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex justify-between items-center mb-6">
+                            <h2 className="text-xl font-bold">Фильтр истории</h2>
+                            <button onClick={() => setShowFilterModal(false)} className="text-gray-500 hover:text-gray-700">
+                                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium mb-2">Тип фильтра</label>
+                                <div className="grid grid-cols-3 gap-2">
+                                    <button
+                                        onClick={() => setFilterConfig({ ...filterConfig, type: 'all' })}
+                                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${filterConfig.type === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                                    >
+                                        Все
+                                    </button>
+                                    <button
+                                        onClick={() => setFilterConfig({ ...filterConfig, type: 'date' })}
+                                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${filterConfig.type === 'date' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                                    >
+                                        Дата
+                                    </button>
+                                    <button
+                                        onClick={() => setFilterConfig({ ...filterConfig, type: 'period' })}
+                                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${filterConfig.type === 'period' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                                    >
+                                        Период
+                                    </button>
+                                </div>
+                            </div>
+
+                            {filterConfig.type === 'date' && (
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Выберите дату</label>
+                                    <input
+                                        type="date"
+                                        value={filterConfig.date}
+                                        onChange={(e) => setFilterConfig({ ...filterConfig, date: e.target.value })}
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    />
+                                </div>
+                            )}
+
+                            {filterConfig.type === 'period' && (
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">С</label>
+                                        <input
+                                            type="date"
+                                            value={filterConfig.startDate}
+                                            onChange={(e) => setFilterConfig({ ...filterConfig, startDate: e.target.value })}
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-sm font-medium mb-2">По</label>
+                                        <input
+                                            type="date"
+                                            value={filterConfig.endDate}
+                                            onChange={(e) => setFilterConfig({ ...filterConfig, endDate: e.target.value })}
+                                            className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={handleResetFilter}
+                                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                >
+                                    Сбросить
+                                </button>
+                                <button
+                                    onClick={handleApplyFilter}
+                                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                >
+                                    Применить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }
