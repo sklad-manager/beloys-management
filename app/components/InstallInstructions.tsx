@@ -26,6 +26,13 @@ export default function InstallInstructions({ isOpen, onClose }: InstallInstruct
                 </div>
 
                 <div className="space-y-4">
+                    <div className="bg-gray-50 p-3 rounded-lg text-center break-all">
+                        <p className="text-sm text-gray-600 mb-1">Адрес сайта:</p>
+                        <a href="https://beloys-management-l66n.vercel.app" className="text-blue-600 font-medium hover:underline">
+                            beloys-management-l66n.vercel.app
+                        </a>
+                    </div>
+
                     <div>
                         <h3 className="font-semibold text-lg mb-2">📱 На Android:</h3>
                         <ol className="list-decimal list-inside space-y-2 text-sm">
