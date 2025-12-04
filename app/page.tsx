@@ -1,67 +1,212 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import CashPage from './components/CashPage';
 import InstallInstructions from './components/InstallInstructions';
 
-type MenuPage = 'menu' | 'clients' | 'expenses' | 'cash' | 'salary' | 'settings';
+type MenuPage = 'menu' | 'expenses' | 'cash' | 'salary' | 'settings';
+
+interface Order {
+  id: number;
+  orderNumber: string;
+  dateReceived: string;
+  dateIssue: string;
+  client: string;
+  phone: string;
+  brand: string;
+  color: string;
+  defect: string;
+  comment: string;
+  prepayment: number;
+  master: string;
+  status: string;
+  price: number;
+  discount: number;
+  paid: number;
+  debt: number;
+  profit: number;
+  issued: number;
+  notIssued: number;
+  dateIssued: string;
+}
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState<MenuPage>('menu');
   const [showInstallModal, setShowInstallModal] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Загрузка заказов
+  useEffect(() => {
+    if (currentPage === 'menu') {
+      loadOrders();
+    }
+  }, [currentPage]);
+
+  const loadOrders = async () => {
+    try {
+      const response = await fetch('/api/orders');
+      const data = await response.json();
+      setOrders(data);
+      setLoading(false);
+    } catch (error) {
+      console.error('Ошибка загрузки заказов:', error);
+      setLoading(false);
+    }
+  };
 
   if (currentPage === 'menu') {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="max-w-2xl w-full">
-          <div className="flex justify-center items-center mb-12">
-            <h1 className="text-4xl font-bold text-gray-800">
-              Belous
-            </h1>
+      <div className="min-h-screen bg-gray-50">
+        {/* Заголовок */}
+        <div className="bg-white shadow-sm border-b">
+          <div className="max-w-7xl mx-auto px-4 py-4">
+            <h1 className="text-2xl font-bold text-slate-700">Belous</h1>
           </div>
+        </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="max-w-7xl mx-auto p-4">
+          {/* Кнопки в ряд */}
+          <div className="flex flex-wrap gap-3 mb-6">
             <button
-              onClick={() => setCurrentPage('clients')}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 text-center"
+              onClick={() => setShowOrderModal(true)}
+              className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors shadow-md font-medium"
             >
-              <div className="text-5xl mb-4">👥</div>
-              <div className="text-xl font-semibold text-gray-800">Клиенты</div>
+              📋 Принять заказ
             </button>
 
             <button
               onClick={() => setCurrentPage('expenses')}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 text-center"
+              className="bg-white text-slate-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors shadow-md border border-gray-200 font-medium"
             >
-              <div className="text-5xl mb-4">💰</div>
-              <div className="text-xl font-semibold text-gray-800">Расходы</div>
+              💰 Расходы
             </button>
 
             <button
               onClick={() => setCurrentPage('cash')}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 text-center"
+              className="bg-white text-slate-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors shadow-md border border-gray-200 font-medium"
             >
-              <div className="text-5xl mb-4">💵</div>
-              <div className="text-xl font-semibold text-gray-800">Касса</div>
+              💵 Касса
             </button>
 
             <button
               onClick={() => setCurrentPage('salary')}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 text-center"
+              className="bg-white text-slate-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors shadow-md border border-gray-200 font-medium"
             >
-              <div className="text-5xl mb-4">💼</div>
-              <div className="text-xl font-semibold text-gray-800">Зарплата</div>
+              💼 Зарплата
             </button>
 
             <button
               onClick={() => setCurrentPage('settings')}
-              className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-xl transition-all hover:scale-105 text-center md:col-span-2"
+              className="bg-white text-slate-700 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors shadow-md border border-gray-200 font-medium"
             >
-              <div className="text-5xl mb-4">⚙️</div>
-              <div className="text-xl font-semibold text-gray-800">Настройки</div>
+              ⚙️ Настройки
             </button>
           </div>
+
+          {/* Таблица заказов */}
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <div className="overflow-x-auto">
+              {loading ? (
+                <div className="p-8 text-center text-gray-500">Загрузка заказов...</div>
+              ) : orders.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  Нет заказов. Нажмите "Принять заказ" чтобы добавить первый заказ.
+                </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100 border-b">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">№</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Дата приема</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Дата выдачи</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Клиент</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Телефон</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Бренд</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Цвет</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Дефект</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Комментарий</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Предоплата</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Мастер</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Статус</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Цена</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Скидка</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Оплачено</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Долг</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Прибыль</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Выдано</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Не выдано</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Дата выдачи факт</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {orders.map((order) => (
+                      <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.orderNumber}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{new Date(order.dateReceived).toLocaleDateString('ru-RU')}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{new Date(order.dateIssue).toLocaleDateString('ru-RU')}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.client}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.phone}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.brand}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.color}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.defect}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.comment}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.prepayment}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.master}</td>
+                        <td className="px-3 py-2 text-sm">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {order.status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.price}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.discount}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.paid}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.debt}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.profit}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.issued}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.notIssued}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">
+                          {order.dateIssued ? new Date(order.dateIssued).toLocaleDateString('ru-RU') : '-'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Модальное окно для приема заказа */}
+        {showOrderModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowOrderModal(false)}>
+            <div className="bg-white rounded-xl p-6 max-w-2xl w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold text-slate-700">Принять заказ</h2>
+                <button onClick={() => setShowOrderModal(false)} className="text-gray-500 hover:text-gray-700">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="text-center py-8 text-gray-500">
+                Форма приема заказа будет добавлена позже
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowOrderModal(false)}
+                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                >
+                  Закрыть
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <InstallInstructions isOpen={showInstallModal} onClose={() => setShowInstallModal(false)} />
       </div>
     );
@@ -96,7 +241,6 @@ export default function Home() {
         </button>
 
         <h1 className="text-3xl font-bold mb-6">
-          {currentPage === 'clients' && 'Клиенты'}
           {currentPage === 'expenses' && 'Расходы'}
           {currentPage === 'salary' && 'Зарплата'}
           {currentPage === 'settings' && 'Настройки'}
