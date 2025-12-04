@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useState, useEffect } from 'react';
 import XLSX from 'xlsx-js-style';
 
 interface Transaction {
@@ -281,52 +280,69 @@ export default function CashPage() {
         const wb = XLSX.utils.book_new();
 
         // Подготовка данных
-        const data = reportData.transactions.map(t => ({
-            'Дата': new Date(t.date).toLocaleDateString('ru-RU'),
-            'Тип': t.type === 'Income' ? 'Приход' : 'Расход',
-            'Способ': t.method === 'Cash' ? 'Наличные' : 'Безнал',
-            'Категория': t.category,
-            'Описание': t.description,
-            'Сумма': t.amount
-        }));
+        const data = [
+            ['Дата', 'Тип', 'Категория', 'Описание', 'Наличные', 'Безналичные']
+        ];
+
+        reportData.transactions.forEach(t => {
+            data.push([
+                new Date(t.date).toLocaleDateString('ru-RU'),
+                t.type === 'Income' ? 'Приход' : 'Расход',
+                t.category,
+                t.description,
+                t.method === 'Cash' ? t.amount : '',
+                t.method === 'Terminal' ? t.amount : ''
+            ] as any);
+        });
 
         // Добавление итогов
-        data.push({} as any); // Пустая строка
-        data.push({
-            'Дата': 'ИТОГО ПРИХОД:',
-            'Тип': '',
-            'Способ': '',
-            'Категория': '',
-            'Описание': '',
-            'Сумма': reportData.summary.income
-        } as any);
-        data.push({
-            'Дата': 'ИТОГО РАСХОД:',
-            'Тип': '',
-            'Способ': '',
-            'Категория': '',
-            'Описание': '',
-            'Сумма': reportData.summary.expense
-        } as any);
-        data.push({
-            'Дата': 'САЛЬДО:',
-            'Тип': '',
-            'Способ': '',
-            'Категория': '',
-            'Описание': '',
-            'Сумма': reportData.summary.income - reportData.summary.expense
-        } as any);
+        data.push(['', '', '', '', '', '']); // Пустая строка
+        data.push([
+            'ИТОГО:',
+            '',
+            '',
+            '',
+            reportData.transactions.filter(t => t.method === 'Cash').reduce((acc, t) => t.type === 'Income' ? acc + t.amount : acc - t.amount, 0),
+            reportData.transactions.filter(t => t.method === 'Terminal').reduce((acc, t) => t.type === 'Income' ? acc + t.amount : acc - t.amount, 0)
+        ] as any);
 
-        const ws = XLSX.utils.json_to_sheet(data);
+        const ws = XLSX.utils.aoa_to_sheet(data);
+
+        // Стилизация
+        const range = XLSX.utils.decode_range(ws['!ref'] || 'A1:F1');
+
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+            const typeCellRef = XLSX.utils.encode_cell({ r: R, c: 1 }); // Колонка "Тип" (индекс 1)
+            if (!ws[typeCellRef]) continue;
+
+            const cellValue = ws[typeCellRef].v;
+            if (cellValue === 'Приход') {
+                ws[typeCellRef].s = {
+                    font: { color: { rgb: "008000" }, bold: true } // Зеленый
+                };
+            } else if (cellValue === 'Расход') {
+                ws[typeCellRef].s = {
+                    font: { color: { rgb: "FF0000" }, bold: true } // Красный
+                };
+            }
+        }
+
+        // Жирный шрифт для заголовков
+        for (let C = range.s.c; C <= range.e.c; ++C) {
+            const headerRef = XLSX.utils.encode_cell({ r: 0, c: C });
+            if (ws[headerRef]) {
+                ws[headerRef].s = { font: { bold: true } };
+            }
+        }
 
         // Настройка ширины колонок
         const wscols = [
             { wch: 12 }, // Дата
             { wch: 10 }, // Тип
-            { wch: 12 }, // Способ
             { wch: 20 }, // Категория
             { wch: 40 }, // Описание
-            { wch: 15 }  // Сумма
+            { wch: 15 }, // Наличные
+            { wch: 15 }  // Безналичные
         ];
         ws['!cols'] = wscols;
 
