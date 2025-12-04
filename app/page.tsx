@@ -10,25 +10,18 @@ type MenuPage = 'menu' | 'expenses' | 'cash' | 'salary' | 'settings';
 interface Order {
   id: number;
   orderNumber: string;
-  dateReceived: string;
-  dateIssue: string;
-  client: string;
+  createdAt: string;
+  clientName: string;
   phone: string;
+  shoeType: string;
   brand: string;
   color: string;
-  defect: string;
+  quantity: number;
+  services: string;
   comment: string;
-  prepayment: number;
-  master: string;
   status: string;
   price: number;
-  discount: number;
-  paid: number;
-  debt: number;
-  profit: number;
-  issued: number;
-  notIssued: number;
-  dateIssued: string;
+  master?: { name: string };
 }
 
 export default function Home() {
@@ -120,55 +113,35 @@ export default function Home() {
                   <thead className="bg-gray-100 border-b">
                     <tr>
                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">№</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Дата приема</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Дата выдачи</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Дата</th>
                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Клиент</th>
                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Телефон</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Вид обуви</th>
                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Бренд</th>
                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Цвет</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Дефект</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Кол-во</th>
+                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Услуги</th>
                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Комментарий</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Предоплата</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Мастер</th>
                       <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Статус</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Цена</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Скидка</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Оплачено</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Долг</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Прибыль</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Выдано</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Не выдано</th>
-                      <th className="px-3 py-2 text-left text-xs font-medium text-gray-700 uppercase">Дата выдачи факт</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
                     {orders.map((order) => (
                       <tr key={order.id} className="hover:bg-gray-50 transition-colors">
                         <td className="px-3 py-2 text-sm text-gray-900">{order.orderNumber}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{new Date(order.dateReceived).toLocaleDateString('ru-RU')}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{new Date(order.dateIssue).toLocaleDateString('ru-RU')}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{order.client}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{new Date(order.createdAt).toLocaleDateString('ru-RU')}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.clientName}</td>
                         <td className="px-3 py-2 text-sm text-gray-900">{order.phone}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.shoeType}</td>
                         <td className="px-3 py-2 text-sm text-gray-900">{order.brand}</td>
                         <td className="px-3 py-2 text-sm text-gray-900">{order.color}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{order.defect}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.quantity}</td>
+                        <td className="px-3 py-2 text-sm text-gray-900">{order.services}</td>
                         <td className="px-3 py-2 text-sm text-gray-900">{order.comment}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{order.prepayment}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{order.master}</td>
                         <td className="px-3 py-2 text-sm">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                             {order.status}
                           </span>
-                        </td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{order.price}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{order.discount}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{order.paid}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{order.debt}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{order.profit}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{order.issued}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">{order.notIssued}</td>
-                        <td className="px-3 py-2 text-sm text-gray-900">
-                          {order.dateIssued ? new Date(order.dateIssued).toLocaleDateString('ru-RU') : '-'}
                         </td>
                       </tr>
                     ))}

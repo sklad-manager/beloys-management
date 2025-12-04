@@ -7,38 +7,32 @@ export async function POST(request: Request) {
     try {
         const body = await request.json();
 
-        // Generate order number if not provided
-        let orderNumber = body.orderNumber;
-        if (!orderNumber) {
-            const lastOrder = await prisma.order.findFirst({
-                orderBy: { id: 'desc' },
-            });
-            const lastNum = lastOrder ? parseInt(lastOrder.orderNumber) : 0;
-            orderNumber = String(lastNum + 1).padStart(6, '0');
-        }
+        // Автогенерация номера заказа
+        const lastOrder = await prisma.order.findFirst({
+            orderBy: { id: 'desc' },
+        });
+        const lastNum = lastOrder ? parseInt(lastOrder.orderNumber) : 0;
+        const orderNumber = String(lastNum + 1).padStart(6, '0');
 
-        // Handle prepayment based on payment method
-        const prepaymentCash = body.paymentMethod === 'cash' ? body.prepayment : 0;
-        const prepaymentTerminal = body.paymentMethod === 'terminal' ? body.prepayment : 0;
-
+        // Создание заказа с данными из формы
         const order = await prisma.order.create({
             data: {
                 orderNumber,
-                clientName: body.clientName,
-                phone: body.phone,
-                shoeType: body.shoeType,
-                brand: body.brand,
-                color: body.color,
-                quantity: body.quantity,
-                services: body.services,
+                clientName: body.client || '',
+                phone: body.phone || '',
+                shoeType: body.shoeType || '',
+                brand: body.brand || '',
+                color: body.color || '',
+                quantity: parseInt(body.shoeCount) || 1,
+                services: Array.isArray(body.services) ? body.services.join(', ') : '',
                 comment: body.comment || '',
-                price: body.price,
-                masterPrice: body.masterPrice,
-                materialPrice: body.materialPrice,
-                prepaymentCash,
-                prepaymentTerminal,
-                masterId: body.masterId,
-                status: body.status,
+                price: 0, // Будет заполнено позже
+                masterPrice: 0,
+                materialPrice: 0,
+                prepaymentCash: 0,
+                prepaymentTerminal: 0,
+                masterId: undefined,
+                status: 'Принят',
             },
         });
 
