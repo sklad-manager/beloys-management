@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import * as XLSX from 'xlsx';
+import { useState, useEffect } from 'react';
+import XLSX from 'xlsx-js-style';
 
 interface Transaction {
     id: number;
