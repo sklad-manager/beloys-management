@@ -31,7 +31,6 @@ export async function POST(request: Request) {
                 materialPrice: 0,
                 prepaymentCash: 0,
                 prepaymentTerminal: 0,
-                masterId: undefined,
                 status: 'Принят',
             },
         });
