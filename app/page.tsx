@@ -8,46 +8,17 @@ type MenuPage = 'menu' | 'clients' | 'expenses' | 'cash' | 'salary' | 'settings'
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState<MenuPage>('menu');
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState<MenuPage>('menu');
   const [showInstallModal, setShowInstallModal] = useState(false);
 
   if (currentPage === 'menu') {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
         <div className="max-w-2xl w-full">
-          <div className="flex justify-between items-center mb-12 relative">
-            <div className="w-10"></div> {/* Spacer for centering */}
+          <div className="flex justify-center items-center mb-12">
             <h1 className="text-4xl font-bold text-gray-800">
               Belous
             </h1>
-            <div className="relative">
-              <button
-                onClick={() => setIsMenuOpen(!isMenuOpen)}
-                className="p-2 rounded-full hover:bg-white/50 transition-colors"
-              >
-                <svg className="w-8 h-8 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                </svg>
-              </button>
-
-              {isMenuOpen && (
-                <>
-                  <div className="fixed inset-0 z-10" onClick={() => setIsMenuOpen(false)}></div>
-                  <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-xl border border-gray-100 p-2 min-w-[220px] z-20">
-                    <button
-                      onClick={() => {
-                        setShowInstallModal(true);
-                        setIsMenuOpen(false);
-                      }}
-                      className="w-full text-left px-4 py-3 rounded-lg hover:bg-blue-50 text-gray-700 flex items-center gap-3 transition-colors"
-                    >
-                      <span className="text-xl">📱</span>
-                      <span className="font-medium">Установить приложение</span>
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -133,9 +104,25 @@ export default function Home() {
         </h1>
 
         <div className="bg-white p-6 rounded-lg shadow">
-          <p className="text-gray-600">Раздел в разработке...</p>
+          {currentPage === 'settings' ? (
+            <div className="space-y-4">
+              <button
+                onClick={() => setShowInstallModal(true)}
+                className="w-full md:w-auto px-6 py-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center justify-center gap-3 shadow-md"
+              >
+                <span className="text-xl">📱</span>
+                <span className="font-medium">Установить приложение</span>
+              </button>
+              <p className="text-sm text-gray-500 mt-2">
+                Нажмите кнопку выше, чтобы узнать как установить приложение на ваше устройство.
+              </p>
+            </div>
+          ) : (
+            <p className="text-gray-600">Раздел в разработке...</p>
+          )}
         </div>
       </div>
+      <InstallInstructions isOpen={showInstallModal} onClose={() => setShowInstallModal(false)} />
     </div>
   );
 }
