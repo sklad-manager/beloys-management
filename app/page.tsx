@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import CashPage from './components/CashPage';
+import InstallInstructions from './components/InstallInstructions';
 
 type MenuPage = 'menu' | 'clients' | 'expenses' | 'cash' | 'salary' | 'settings';
 
@@ -58,6 +59,7 @@ export default function Home() {
             </button>
           </div>
         </div>
+        <InstallInstructions />
       </div>
     );
   }
