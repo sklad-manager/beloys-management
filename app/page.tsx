@@ -8,7 +8,6 @@ type MenuPage = 'menu' | 'clients' | 'expenses' | 'cash' | 'salary' | 'settings'
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState<MenuPage>('menu');
-  const [currentPage, setCurrentPage] = useState<MenuPage>('menu');
   const [showInstallModal, setShowInstallModal] = useState(false);
 
   if (currentPage === 'menu') {
