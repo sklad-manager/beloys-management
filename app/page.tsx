@@ -18,7 +18,7 @@ export default function Home() {
           <div className="flex justify-between items-center mb-12 relative">
             <div className="w-10"></div> {/* Spacer for centering */}
             <h1 className="text-4xl font-bold text-gray-800">
-              Beloys
+              Belous
             </h1>
             <div className="relative">
               <button

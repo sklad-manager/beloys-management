@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Beloys - Управление мастерской по ремонту обуви",
+  title: "Belous - Управление мастерской по ремонту обуви",
   description: "Система управления мастерской по ремонту обуви",
   viewport: {
     width: 'device-width',

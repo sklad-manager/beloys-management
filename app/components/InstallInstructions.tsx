@@ -51,7 +51,7 @@ export default function InstallInstructions({ isOpen, onClose }: InstallInstruct
                         <ol className="list-decimal list-inside space-y-2 text-sm">
                             <li>Откройте сайт в Chrome или Edge</li>
                             <li>Нажмите значок установки (⊕) в адресной строке</li>
-                            <li>Или: Меню → "Установить Beloys"</li>
+                            <li>Или: Меню → "Установить Belous"</li>
                         </ol>
                     </div>
 
