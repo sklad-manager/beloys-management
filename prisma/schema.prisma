@@ -56,8 +56,8 @@ model Order {
   paymentDate         DateTime?
   
   // Relations
-  masterId        Int
-  master          Master @relation(fields: [masterId], references: [id])
+  masterId        Int?
+  master          Master?  @relation(fields: [masterId], references: [id])
   
   status          String   @default("Принят в работу") // "Принят в работу", "Выполнен", "Закрыт"
 }
