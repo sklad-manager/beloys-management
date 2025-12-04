@@ -12,7 +12,7 @@ export async function POST(request: Request) {
             orderBy: { id: 'desc' },
         });
         const lastNum = lastOrder ? parseInt(lastOrder.orderNumber) : 0;
-        const orderNumber = String(lastNum + 1).padStart(6, '0');
+        const orderNumber = String(lastNum + 1);
 
         // Создание заказа с данными из формы
         const order = await prisma.order.create({
