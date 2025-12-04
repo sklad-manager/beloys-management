@@ -394,72 +394,72 @@ export default function CashPage() {
                     </div>
                 )}
             </div>
-        </div>
 
-            {/* Модальное окно инвентаризации */ }
-    {
-        showInventoryModal && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowInventoryModal(false)}>
-                <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
-                    <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-bold">Инвентаризация</h2>
-                        <button onClick={() => setShowInventoryModal(false)} className="text-gray-500 hover:text-gray-700">
-                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+
+            {/* Модальное окно инвентаризации */}
+            {
+                showInventoryModal && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowInventoryModal(false)}>
+                        <div className="bg-white rounded-xl p-6 max-w-md w-full shadow-2xl" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-between items-center mb-6">
+                                <h2 className="text-xl font-bold">Инвентаризация</h2>
+                                <button onClick={() => setShowInventoryModal(false)} className="text-gray-500 hover:text-gray-700">
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
+
+                            <form onSubmit={handleInventorySubmit} className="space-y-4">
+                                <div className="bg-blue-50 p-4 rounded-lg mb-4">
+                                    <p className="text-sm text-blue-800 mb-2">Текущий расчетный баланс:</p>
+                                    <div className="flex justify-between text-sm">
+                                        <span>Наличные:</span>
+                                        <span className="font-bold">{balances.cashBalance.toFixed(2)} ₴</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span>Безнал:</span>
+                                        <span className="font-bold">{balances.terminalBalance.toFixed(2)} ₴</span>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Наличные (фактический остаток)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={inventoryData.actualCash}
+                                        onChange={(e) => setInventoryData({ ...inventoryData, actualCash: e.target.value })}
+                                        placeholder="Введите сумму в кассе"
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium mb-2">Безналичные (фактический остаток)</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={inventoryData.actualTerminal}
+                                        onChange={(e) => setInventoryData({ ...inventoryData, actualTerminal: e.target.value })}
+                                        placeholder="Введите сумму на счетах"
+                                        className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                        required
+                                    />
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium mt-4"
+                                >
+                                    Подтвердить и выровнять баланс
+                                </button>
+                            </form>
+                        </div>
                     </div>
-
-                    <form onSubmit={handleInventorySubmit} className="space-y-4">
-                        <div className="bg-blue-50 p-4 rounded-lg mb-4">
-                            <p className="text-sm text-blue-800 mb-2">Текущий расчетный баланс:</p>
-                            <div className="flex justify-between text-sm">
-                                <span>Наличные:</span>
-                                <span className="font-bold">{balances.cashBalance.toFixed(2)} ₴</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span>Безнал:</span>
-                                <span className="font-bold">{balances.terminalBalance.toFixed(2)} ₴</span>
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Наличные (фактический остаток)</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={inventoryData.actualCash}
-                                onChange={(e) => setInventoryData({ ...inventoryData, actualCash: e.target.value })}
-                                placeholder="Введите сумму в кассе"
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium mb-2">Безналичные (фактический остаток)</label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                value={inventoryData.actualTerminal}
-                                onChange={(e) => setInventoryData({ ...inventoryData, actualTerminal: e.target.value })}
-                                placeholder="Введите сумму на счетах"
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                required
-                            />
-                        </div>
-
-                        <button
-                            type="submit"
-                            className="w-full bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors font-medium mt-4"
-                        >
-                            Подтвердить и выровнять баланс
-                        </button>
-                    </form>
-                </div>
-            </div>
-        )
-    }
+                )
+            }
         </div >
     );
 }
