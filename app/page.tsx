@@ -42,10 +42,16 @@ export default function Home() {
     try {
       const response = await fetch('/api/orders');
       const data = await response.json();
-      setOrders(data);
+      if (Array.isArray(data)) {
+        setOrders(data);
+      } else {
+        console.error('API returned non-array:', data);
+        setOrders([]);
+      }
       setLoading(false);
     } catch (error) {
       console.error('Ошибка загрузки заказов:', error);
+      setOrders([]);
       setLoading(false);
     }
   };
