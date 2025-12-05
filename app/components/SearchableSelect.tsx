@@ -29,55 +29,81 @@ export default function SearchableSelect({ label, options, value, onChange, plac
             }
         };
 
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
-    }, []);
+        value: string;
+        onChange: (value: string) => void;
+        placeholder ?: string;
+    }
 
-    const handleSelect = (option: string) => {
-        onChange(option);
-        setIsOpen(false);
-        setSearchTerm('');
-    };
+        export default function SearchableSelect({ label, options, value, onChange, placeholder }: SearchableSelectProps) {
+        const [isOpen, setIsOpen] = useState(false);
+        const [searchTerm, setSearchTerm] = useState('');
+        const dropdownRef = useRef<HTMLDivElement>(null);
 
-    return (
-        <div className="relative" ref={dropdownRef}>
-            <label className="block text-sm font-medium text-slate-700 mb-1">{label}:</label>
+        // Фильтрация опций по поисковому запросу
+        const filteredOptions = options.filter(option =>
+            option.toLowerCase().includes(searchTerm.toLowerCase())
+        );
 
-            <div
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg cursor-pointer bg-white hover:border-blue-400 transition-colors flex justify-between items-center"
-            >
-                <span className={value ? 'text-slate-900' : 'text-gray-400'}>
-                    {value || placeholder || 'Выберите...'}
-                </span>
-                <svg
-                    className={`w-5 h-5 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-            </div>
+        // Закрытие при клике вне компонента
+        useEffect(() => {
+            const handleClickOutside = (event: MouseEvent) => {
+                if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                    setIsOpen(false);
+                    // When clicking outside, reset searchTerm to the current value if it's not empty,
+                    // otherwise clear it. This prevents the input from showing a filtered term
+                    // when the dropdown closes if the user didn't select anything.
+                    setSearchTerm(value || '');
+                }
+            };
 
-            {isOpen && (
-                <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
-                    {/* Поле поиска */}
-                    <div className="p-2 border-b border-gray-200">
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            placeholder="Поиск..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            onClick={(e) => e.stopPropagation()}
-                        />
-                    </div>
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }, [value]); // Depend on 'value' to reset searchTerm correctly when value changes externally
 
-                    {/* Список опций */}
-                    <div className="overflow-y-auto max-h-96">
-                        {filteredOptions.length > 0 ? (
-                            filteredOptions.map((option, index) => (
+        // Effect to update searchTerm when the external 'value' prop changes
+        useEffect(() => {
+            setSearchTerm(value || '');
+        }, [value]);
+
+        const handleSelect = (option: string) => {
+            onChange(option);
+            setIsOpen(false);
+            setSearchTerm(option); // Set searchTerm to the selected option
+        };
+
+        return (
+            <div className="relative" ref={dropdownRef}>
+                <label className="block text-sm font-medium text-slate-700 mb-1">{label}:</label>
+
+                {/* Поле ввода с поиском */}
+                <div className="relative">
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            if (!isOpen) setIsOpen(true);
+                        }}
+                        onFocus={() => setIsOpen(true)}
+                        placeholder={placeholder || 'Выберите...'}
+                        className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    />
+                    <svg
+                        onClick={() => setIsOpen(!isOpen)}
+                        className={`absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 transition-transform cursor-pointer ${isOpen ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                    >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                </div>
+
+                {/* Выпадающий список */}
+                {isOpen && filteredOptions.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
+                        <div className="overflow-y-auto max-h-96">
+                            {filteredOptions.map((option, index) => (
                                 <div
                                     key={index}
                                     onClick={() => handleSelect(option)}
@@ -86,13 +112,15 @@ export default function SearchableSelect({ label, options, value, onChange, plac
                                 >
                                     {option}
                                 </div>
-                            ))
-                        ) : (
-                            <div className="px-3 py-2 text-gray-500 text-center">Ничего не найдено</div>
-                        )}
+                            ))}
+                        </div>
                     </div>
-                </div>
-            )}
-        </div>
-    );
-}
+                )}
+                {isOpen && filteredOptions.length === 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg overflow-hidden">
+                        <div className="px-3 py-2 text-gray-500 text-center">Ничего не найдено</div>
+                    </div>
+                )}
+            </div>
+        );
+    }
