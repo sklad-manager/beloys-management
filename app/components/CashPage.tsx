@@ -457,8 +457,8 @@ export default function CashPage() {
                             <input
                                 type="date"
                                 value={formData.date}
-                                onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                readOnly
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
                             />
                         </div>
                     </div>
