@@ -455,10 +455,10 @@ export default function CashPage() {
                         <div>
                             <label className="block text-sm font-medium mb-2">Дата</label>
                             <input
-                                type="date"
-                                value={formData.date}
-                                readOnly
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed"
+                                type="text"
+                                value={new Date(formData.date).toLocaleDateString('ru-RU')}
+                                disabled
+                                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-gray-100 cursor-not-allowed text-gray-600"
                             />
                         </div>
                     </div>
