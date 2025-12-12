@@ -26,6 +26,7 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
     const [txType, setTxType] = useState<'Income' | 'Expense'>('Income');
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
+    const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Terminal'>('Cash');
 
     const fetchData = async () => {
         setLoading(true);
@@ -60,13 +61,15 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                     type: txType,
                     amount,
                     description,
-                    category: 'Manual'
+                    category: 'Manual',
+                    method: paymentMethod
                 })
             });
 
             if (res.ok) {
                 setAmount('');
                 setDescription('');
+                setPaymentMethod('Cash');
                 setMode('view');
                 fetchData(); // Refresh list
             }
@@ -182,6 +185,57 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                                     border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white'
                                 }}
                             />
+                        </div>
+
+                        {/* Payment Method Selection */}
+                        <div style={{ marginBottom: '2rem' }}>
+                            <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Способ оплаты</label>
+                            <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                <button
+                                    type="button"
+                                    onClick={() => setPaymentMethod('Cash')}
+                                    style={{
+                                        flex: 1,
+                                        padding: '1rem',
+                                        background: paymentMethod === 'Cash' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255,255,255,0.05)',
+                                        border: paymentMethod === 'Cash' ? '2px solid #4ade80' : '1px solid var(--border-subtle)',
+                                        borderRadius: '12px',
+                                        color: paymentMethod === 'Cash' ? '#4ade80' : 'white',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        fontSize: '1.5rem',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '0.5rem'
+                                    }}
+                                >
+                                    <div>💵</div>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: '500' }}>Наличные</div>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => setPaymentMethod('Terminal')}
+                                    style={{
+                                        flex: 1,
+                                        padding: '1rem',
+                                        background: paymentMethod === 'Terminal' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.05)',
+                                        border: paymentMethod === 'Terminal' ? '2px solid #6366f1' : '1px solid var(--border-subtle)',
+                                        borderRadius: '12px',
+                                        color: paymentMethod === 'Terminal' ? '#a5b4fc' : 'white',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s',
+                                        fontSize: '1.5rem',
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '0.5rem'
+                                    }}
+                                >
+                                    <div>💳</div>
+                                    <div style={{ fontSize: '0.85rem', fontWeight: '500' }}>Терминал</div>
+                                </button>
+                            </div>
                         </div>
 
                         <div style={{ display: 'flex', gap: '1rem' }}>
