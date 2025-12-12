@@ -1,0 +1,20 @@
+# Dependencies
+node_modules
+
+# Build artifacts
+.next
+out
+
+# Development
+.env.local
+.env.development.local
+
+# Testing
+coverage
+
+# Misc
+.DS_Store
+*.log
+
+# Backup
+_backup
