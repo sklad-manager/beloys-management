@@ -207,117 +207,119 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                     </>
                 ) : (
                     /* Add Form */
-                    <form onSubmit={handleSubmit} style={{ padding: '1rem' }}>
-                        <h3 style={{ marginBottom: '1rem', textAlign: 'center', color: txType === 'Income' ? '#4ade80' : '#f87171' }}>
-                            {txType === 'Income' ? 'Внесение денег' : 'Изъятие денег'}
-                        </h3>
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
+                        <form onSubmit={handleSubmit}>
+                            <h3 style={{ marginBottom: '1rem', textAlign: 'center', color: txType === 'Income' ? '#4ade80' : '#f87171' }}>
+                                {txType === 'Income' ? 'Внесение денег' : 'Изъятие денег'}
+                            </h3>
 
-                        <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Сумма</label>
-                            <input
-                                type="number"
-                                value={amount}
-                                onChange={e => setAmount(e.target.value)}
-                                autoFocus
-                                required
-                                style={{
-                                    width: '100%', padding: '1rem', fontSize: '1.5rem', background: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white'
-                                }}
-                            />
-                        </div>
+                            <div style={{ marginBottom: '1rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Сумма</label>
+                                <input
+                                    type="number"
+                                    value={amount}
+                                    onChange={e => setAmount(e.target.value)}
+                                    autoFocus
+                                    required
+                                    style={{
+                                        width: '100%', padding: '1rem', fontSize: '1.5rem', background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white'
+                                    }}
+                                />
+                            </div>
 
-                        <div style={{ marginBottom: '2rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Комментарий / Причина</label>
-                            <input
-                                type="text"
-                                value={description}
-                                onChange={e => setDescription(e.target.value)}
-                                placeholder={txType === 'Income' ? 'Например: Пополнение, Оплата...' : 'Например: Аренда, Закупка...'}
-                                required
-                                style={{
-                                    width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.05)',
-                                    border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white'
-                                }}
-                            />
-                        </div>
+                            <div style={{ marginBottom: '2rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Комментарий / Причина</label>
+                                <input
+                                    type="text"
+                                    value={description}
+                                    onChange={e => setDescription(e.target.value)}
+                                    placeholder={txType === 'Income' ? 'Например: Пополнение, Оплата...' : 'Например: Аренда, Закупка...'}
+                                    required
+                                    style={{
+                                        width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.05)',
+                                        border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white'
+                                    }}
+                                />
+                            </div>
 
-                        {/* Payment Method Selection */}
-                        <div style={{ marginBottom: '2rem' }}>
-                            <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Способ оплаты</label>
-                            <div style={{ display: 'flex', gap: '0.75rem' }}>
+                            {/* Payment Method Selection */}
+                            <div style={{ marginBottom: '2rem' }}>
+                                <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Способ оплаты</label>
+                                <div style={{ display: 'flex', gap: '0.75rem' }}>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('Cash')}
+                                        style={{
+                                            flex: 1,
+                                            padding: '1rem',
+                                            background: paymentMethod === 'Cash' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255,255,255,0.05)',
+                                            border: paymentMethod === 'Cash' ? '2px solid #4ade80' : '1px solid var(--border-subtle)',
+                                            borderRadius: '12px',
+                                            color: paymentMethod === 'Cash' ? '#4ade80' : 'white',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                            fontSize: '1.5rem',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '0.5rem'
+                                        }}
+                                    >
+                                        <div>💵</div>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: '500' }}>Наличные</div>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setPaymentMethod('Terminal')}
+                                        style={{
+                                            flex: 1,
+                                            padding: '1rem',
+                                            background: paymentMethod === 'Terminal' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.05)',
+                                            border: paymentMethod === 'Terminal' ? '2px solid #6366f1' : '1px solid var(--border-subtle)',
+                                            borderRadius: '12px',
+                                            color: paymentMethod === 'Terminal' ? '#a5b4fc' : 'white',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                            fontSize: '1.5rem',
+                                            display: 'flex',
+                                            flexDirection: 'column',
+                                            alignItems: 'center',
+                                            gap: '0.5rem'
+                                        }}
+                                    >
+                                        <div>💳</div>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: '500' }}>Терминал</div>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', gap: '1rem' }}>
                                 <button
                                     type="button"
-                                    onClick={() => setPaymentMethod('Cash')}
-                                    style={{
-                                        flex: 1,
-                                        padding: '1rem',
-                                        background: paymentMethod === 'Cash' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255,255,255,0.05)',
-                                        border: paymentMethod === 'Cash' ? '2px solid #4ade80' : '1px solid var(--border-subtle)',
-                                        borderRadius: '12px',
-                                        color: paymentMethod === 'Cash' ? '#4ade80' : 'white',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                        fontSize: '1.5rem',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        gap: '0.5rem'
-                                    }}
+                                    onClick={() => setMode('view')}
+                                    className="btn btn-glass"
+                                    style={{ flex: 1 }}
                                 >
-                                    <div>💵</div>
-                                    <div style={{ fontSize: '0.85rem', fontWeight: '500' }}>Наличные</div>
+                                    Отмена
                                 </button>
                                 <button
-                                    type="button"
-                                    onClick={() => setPaymentMethod('Terminal')}
+                                    type="submit"
+                                    className="btn"
                                     style={{
-                                        flex: 1,
-                                        padding: '1rem',
-                                        background: paymentMethod === 'Terminal' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.05)',
-                                        border: paymentMethod === 'Terminal' ? '2px solid #6366f1' : '1px solid var(--border-subtle)',
-                                        borderRadius: '12px',
-                                        color: paymentMethod === 'Terminal' ? '#a5b4fc' : 'white',
-                                        cursor: 'pointer',
-                                        transition: 'all 0.2s',
-                                        fontSize: '1.5rem',
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        gap: '0.5rem'
+                                        flex: 2,
+                                        background: txType === 'Income' ? '#4ade80' : '#f87171',
+                                        color: 'black',
+                                        fontWeight: 'bold',
+                                        border: 'none',
+                                        fontSize: '1.1rem'
                                     }}
                                 >
-                                    <div>💳</div>
-                                    <div style={{ fontSize: '0.85rem', fontWeight: '500' }}>Терминал</div>
+                                    ✓ Выполнить
                                 </button>
                             </div>
-                        </div>
-
-                        <div style={{ display: 'flex', gap: '1rem' }}>
-                            <button
-                                type="button"
-                                onClick={() => setMode('view')}
-                                className="btn btn-glass"
-                                style={{ flex: 1 }}
-                            >
-                                Отмена
-                            </button>
-                            <button
-                                type="submit"
-                                className="btn"
-                                style={{
-                                    flex: 2,
-                                    background: txType === 'Income' ? '#4ade80' : '#f87171',
-                                    color: 'black',
-                                    fontWeight: 'bold',
-                                    border: 'none',
-                                    fontSize: '1.1rem'
-                                }}
-                            >
-                                ✓ Выполнить
-                            </button>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 )}
 
             </div>
