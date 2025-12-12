@@ -25,7 +25,7 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
     const [loading, setLoading] = useState(true);
 
     // Form State
-    const [mode, setMode] = useState<'view' | 'add' | 'report'>('view');
+    const [mode, setMode] = useState<'view' | 'add' | 'report' | 'inventory'>('view');
     const [txType, setTxType] = useState<'Income' | 'Expense'>('Income');
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
@@ -35,6 +35,10 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
+
+    // Inventory State
+    const [actualCash, setActualCash] = useState('');
+    const [actualTerminal, setActualTerminal] = useState('');
 
     const fetchData = async () => {
         setLoading(true);
@@ -97,6 +101,40 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
         } catch (e) {
             console.error(e);
         }
+    };
+
+    const handleCorrection = async (type: 'Cash' | 'Terminal', actual: number, expected: number) => {
+        const diff = actual - expected;
+        if (Math.abs(diff) < 0.01) return;
+
+        try {
+            await fetch('/api/cash', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: diff > 0 ? 'Income' : 'Expense',
+                    amount: Math.abs(diff),
+                    description: `Корректировка инвентаризации (${type === 'Cash' ? 'Наличные' : 'Терминал'})`,
+                    category: 'Inventory',
+                    method: type
+                })
+            });
+            fetchData();
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const submitInventory = async () => {
+        if (actualCash) {
+            await handleCorrection('Cash', parseFloat(actualCash), cashBalance);
+        }
+        if (actualTerminal) {
+            await handleCorrection('Terminal', parseFloat(actualTerminal), terminalBalance);
+        }
+        setActualCash('');
+        setActualTerminal('');
+        setMode('view');
     };
 
     const applyDateFilter = () => {
@@ -229,6 +267,12 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                                 className="btn btn-glass"
                             >
                                 📈 Отчет
+                            </button>
+                            <button
+                                onClick={() => setMode('inventory')}
+                                className="btn btn-glass"
+                            >
+                                📊 Инвентаризация
                             </button>
                         </div>
 
@@ -366,7 +410,7 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                             </div>
                         </form>
                     </div>
-                ) : (
+                ) : mode === 'report' ? (
                     /* Report View */
                     <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
                         <h3 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>📈 Отчет по кассе</h3>
@@ -427,6 +471,90 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                         <button onClick={() => setMode('view')} className="btn btn-glass" style={{ width: '100%', marginTop: '1rem' }}>
                             Назад
                         </button>
+                    </div>
+                ) : (
+                    /* Inventory Mode */
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+                        <h3 style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#a5b4fc' }}>📊 Инвентаризация</h3>
+
+                        <div style={{ marginBottom: '2rem' }}>
+                            <div style={{ marginBottom: '1.5rem', background: 'rgba(74, 222, 128, 0.05)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(74, 222, 128, 0.2)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                    <h4 style={{ color: '#4ade80', margin: 0 }}>💵 Наличные</h4>
+                                    <div style={{ fontSize: '0.8rem', color: 'gray' }}>По системе: {cashBalance.toLocaleString()} грн</div>
+                                </div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Фактический остаток:</label>
+                                <input
+                                    type="number"
+                                    value={actualCash}
+                                    onChange={e => setActualCash(e.target.value)}
+                                    placeholder={cashBalance.toString()}
+                                    style={{
+                                        width: '100%', padding: '0.75rem', background: 'rgba(0,0,0,0.3)',
+                                        border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white', fontSize: '1.2rem'
+                                    }}
+                                />
+                                {actualCash && (
+                                    <div style={{ marginTop: '0.5rem', textAlign: 'right', fontSize: '0.9rem' }}>
+                                        Расхождение:
+                                        <span style={{
+                                            color: (parseFloat(actualCash) - cashBalance) >= 0 ? '#4ade80' : '#f87171',
+                                            fontWeight: 'bold', marginLeft: '0.5rem'
+                                        }}>
+                                            {(parseFloat(actualCash) - cashBalance) > 0 ? '+' : ''}
+                                            {(parseFloat(actualCash) - cashBalance).toLocaleString()} грн
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div style={{ marginBottom: '1.5rem', background: 'rgba(99, 102, 241, 0.05)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                    <h4 style={{ color: '#a5b4fc', margin: 0 }}>💳 Терминал</h4>
+                                    <div style={{ fontSize: '0.8rem', color: 'gray' }}>По системе: {terminalBalance.toLocaleString()} грн</div>
+                                </div>
+                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Фактический остаток:</label>
+                                <input
+                                    type="number"
+                                    value={actualTerminal}
+                                    onChange={e => setActualTerminal(e.target.value)}
+                                    placeholder={terminalBalance.toString()}
+                                    style={{
+                                        width: '100%', padding: '0.75rem', background: 'rgba(0,0,0,0.3)',
+                                        border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white', fontSize: '1.2rem'
+                                    }}
+                                />
+                                {actualTerminal && (
+                                    <div style={{ marginTop: '0.5rem', textAlign: 'right', fontSize: '0.9rem' }}>
+                                        Расхождение:
+                                        <span style={{
+                                            color: (parseFloat(actualTerminal) - terminalBalance) >= 0 ? '#4ade80' : '#f87171',
+                                            fontWeight: 'bold', marginLeft: '0.5rem'
+                                        }}>
+                                            {(parseFloat(actualTerminal) - terminalBalance) > 0 ? '+' : ''}
+                                            {(parseFloat(actualTerminal) - terminalBalance).toLocaleString()} грн
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div style={{ marginTop: 'auto', display: 'flex', gap: '1rem' }}>
+                            <button
+                                onClick={() => setMode('view')}
+                                className="btn btn-glass"
+                                style={{ flex: 1 }}
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={submitInventory}
+                                className="btn btn-primary"
+                                style={{ flex: 2 }}
+                            >
+                                ✓ Завершить инвентаризацию
+                            </button>
+                        </div>
                     </div>
                 )}
 
