@@ -91,7 +91,7 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
             justifyContent: 'center',
             zIndex: 1000
         }}>
-            <div className="glass-card" style={{ width: '100%', maxWidth: '700px', height: '80vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+            <div className="glass-card" style={{ width: '100%', maxWidth: '700px', height: '80vh', display: 'flex', flexDirection: 'column', position: 'relative', margin: '0 1rem' }}>
 
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
@@ -111,7 +111,7 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                 {mode === 'view' ? (
                     <>
                         {/* Actions */}
-                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', justifyContent: 'center' }}>
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
                             <button
                                 onClick={() => { setMode('add'); setTxType('Income'); }}
                                 className="btn"

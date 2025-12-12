@@ -72,12 +72,12 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
             justifyContent: 'center',
             zIndex: 1000
         }}>
-            <div className="glass-card" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <div className="glass-card" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', margin: '0 1rem' }}>
                 <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Новый Заказ</h2>
 
                 <form onSubmit={handleSubmit}>
                     {/* Клиент */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
                         <div>
                             <label style={labelStyle}>Имя Клиента</label>
                             <input
