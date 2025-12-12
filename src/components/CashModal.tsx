@@ -17,7 +17,9 @@ interface CashModalProps {
 }
 
 export default function CashModal({ isOpen, onClose }: CashModalProps) {
-    const [balance, setBalance] = useState(0);
+    const [cashBalance, setCashBalance] = useState(0);
+    const [terminalBalance, setTerminalBalance] = useState(0);
+    const [totalBalance, setTotalBalance] = useState(0);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -33,13 +35,26 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
         try {
             const res = await fetch('/api/cash');
             const data = await res.json();
-            setBalance(data.balance || 0);
+            setCashBalance(data.cashBalance || 0);
+            setTerminalBalance(data.terminalBalance || 0);
+            setTotalBalance(data.totalBalance || 0);
             setTransactions(data.transactions || []);
         } catch (e) {
             console.error(e);
         } finally {
             setLoading(false);
         }
+    };
+
+    const formatDate = (dateString: string): string => {
+        const date = new Date(dateString);
+        return date.toLocaleString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
     };
 
     useEffect(() => {
@@ -102,11 +117,51 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                     <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
                 </div>
 
-                {/* Balance */}
-                <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Текущий баланс</div>
-                    <div style={{ fontSize: '3rem', fontWeight: 'bold', color: balance >= 0 ? '#4ade80' : '#f87171', textShadow: '0 0 20px rgba(74, 222, 128, 0.2)' }}>
-                        {balance.toLocaleString()} грн
+                {/* Balance Cards */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+                    {/* Cash Balance */}
+                    <div style={{
+                        background: 'rgba(74, 222, 128, 0.1)',
+                        border: '1px solid rgba(74, 222, 128, 0.3)',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>💵</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Наличные</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#4ade80' }}>
+                            {cashBalance.toLocaleString()} грн
+                        </div>
+                    </div>
+
+                    {/* Terminal Balance */}
+                    <div style={{
+                        background: 'rgba(99, 102, 241, 0.1)',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>💳</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Терминал</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#a5b4fc' }}>
+                            {terminalBalance.toLocaleString()} грн
+                        </div>
+                    </div>
+
+                    {/* Total Balance */}
+                    <div style={{
+                        background: 'rgba(245, 158, 11, 0.1)',
+                        border: '1px solid rgba(245, 158, 11, 0.3)',
+                        borderRadius: '12px',
+                        padding: '1rem',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>💰</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Общий</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: totalBalance >= 0 ? '#fbbf24' : '#f87171' }}>
+                            {totalBalance.toLocaleString()} грн
+                        </div>
                     </div>
                 </div>
 
@@ -140,7 +195,7 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                                     <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
                                         <div>
                                             <div style={{ fontWeight: '500' }}>{t.description || 'Без описания'}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'gray' }}>{new Date(t.date).toLocaleDateString()} {new Date(t.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                            <div style={{ fontSize: '0.8rem', color: 'gray' }}>{formatDate(t.date)}</div>
                                         </div>
                                         <div style={{ color: t.type === 'Income' ? '#4ade80' : '#f87171', fontWeight: 'bold' }}>
                                             {t.type === 'Income' ? '+' : '-'}{t.amount} грн

@@ -9,15 +9,25 @@ export async function GET() {
             take: 50
         });
 
-        // Считаем баланс 
-        // (В будущем можно сюда добавить сумму наличных из Заказов, если они не дублируются)
+        // Считаем балансы отдельно по методам оплаты
         const allTransactions = await prisma.cashTransaction.findMany();
-        const balance = allTransactions.reduce((acc, t) => {
-            return t.type === 'Income' ? acc + t.amount : acc - t.amount;
-        }, 0);
+
+        const cashBalance = allTransactions
+            .filter(t => t.method === 'Cash')
+            .reduce((acc, t) => {
+                return t.type === 'Income' ? acc + t.amount : acc - t.amount;
+            }, 0);
+
+        const terminalBalance = allTransactions
+            .filter(t => t.method === 'Terminal')
+            .reduce((acc, t) => {
+                return t.type === 'Income' ? acc + t.amount : acc - t.amount;
+            }, 0);
 
         return NextResponse.json({
-            balance,
+            cashBalance,
+            terminalBalance,
+            totalBalance: cashBalance + terminalBalance,
             transactions
         });
     } catch (error) {
@@ -36,7 +46,7 @@ export async function POST(req: Request) {
                 amount: parseFloat(body.amount),
                 description: body.description || '',
                 category: body.category || 'Manual',
-                method: 'Cash', // По умолчанию Наличные
+                method: body.method || 'Cash', // Используем метод из запроса
                 date: new Date()
             }
         });
