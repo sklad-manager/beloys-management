@@ -9,6 +9,7 @@ interface Transaction {
     amount: number;
     description: string;
     category: string;
+    method: string;
 }
 
 interface CashModalProps {
@@ -24,11 +25,16 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
     const [loading, setLoading] = useState(true);
 
     // Form State
-    const [mode, setMode] = useState<'view' | 'add'>('view');
+    const [mode, setMode] = useState<'view' | 'add' | 'report'>('view');
     const [txType, setTxType] = useState<'Income' | 'Expense'>('Income');
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
     const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Terminal'>('Cash');
+
+    // Report State
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+    const [filteredTransactions, setFilteredTransactions] = useState<Transaction[]>([]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -92,6 +98,40 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
             console.error(e);
         }
     };
+
+    const applyDateFilter = () => {
+        if (!startDate || !endDate) {
+            setFilteredTransactions(transactions);
+            return;
+        }
+
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+
+        const filtered = transactions.filter(t => {
+            const txDate = new Date(t.date);
+            return txDate >= start && txDate <= end;
+        });
+
+        setFilteredTransactions(filtered);
+    };
+
+    const setQuickFilter = (days: number) => {
+        const end = new Date();
+        const start = new Date();
+        start.setDate(start.getDate() - days);
+
+        setStartDate(start.toISOString().split('T')[0]);
+        setEndDate(end.toISOString().split('T')[0]);
+    };
+
+    useEffect(() => {
+        if (mode === 'report') {
+            applyDateFilter();
+        }
+    }, [startDate, endDate, transactions, mode]);
 
     if (!isOpen) return null;
 
@@ -184,6 +224,12 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                             >
                                 - Изъять
                             </button>
+                            <button
+                                onClick={() => { setMode('report'); setQuickFilter(0); }}
+                                className="btn btn-glass"
+                            >
+                                📈 Отчет
+                            </button>
                         </div>
 
                         {/* List */}
@@ -205,7 +251,7 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                             )}
                         </div>
                     </>
-                ) : (
+                ) : mode === 'add' ? (
                     /* Add Form */
                     <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
                         <form onSubmit={handleSubmit}>
@@ -319,6 +365,68 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                ) : (
+                    /* Report View */
+                    <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
+                        <h3 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>📈 Отчет по кассе</h3>
+
+                        {/* Quick Filters */}
+                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+                            <button onClick={() => setQuickFilter(0)} className="btn btn-glass" style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', flex: 1 }}>Сегодня</button>
+                            <button onClick={() => setQuickFilter(1)} className="btn btn-glass" style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', flex: 1 }}>Вчера</button>
+                            <button onClick={() => setQuickFilter(7)} className="btn btn-glass" style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', flex: 1 }}>Неделя</button>
+                            <button onClick={() => setQuickFilter(30)} className="btn btn-glass" style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', flex: 1 }}>Месяц</button>
+                        </div>
+
+                        {/* Date Inputs */}
+                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'gray', marginBottom: '0.3rem' }}>От</label>
+                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ width: '100%', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white' }} />
+                            </div>
+                            <div style={{ flex: 1 }}>
+                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'gray', marginBottom: '0.3rem' }}>До</label>
+                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ width: '100%', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white' }} />
+                            </div>
+                        </div>
+
+                        {/* Summary */}
+                        <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                <span style={{ color: '#4ade80' }}>Приход:</span>
+                                <span style={{ fontWeight: 'bold' }}>+{filteredTransactions.filter(t => t.type === 'Income').reduce((acc, t) => acc + t.amount, 0).toLocaleString()} грн</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                                <span style={{ color: '#f87171' }}>Расход:</span>
+                                <span style={{ fontWeight: 'bold' }}>-{filteredTransactions.filter(t => t.type === 'Expense').reduce((acc, t) => acc + t.amount, 0).toLocaleString()} грн</span>
+                            </div>
+                            <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.5rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
+                                <span>Итого за период:</span>
+                                <span style={{ fontWeight: 'bold', color: 'white' }}>
+                                    {(filteredTransactions.filter(t => t.type === 'Income').reduce((acc, t) => acc + t.amount, 0) - filteredTransactions.filter(t => t.type === 'Expense').reduce((acc, t) => acc + t.amount, 0)).toLocaleString()} грн
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Filtered List */}
+                        <div style={{ flex: 1, overflowY: 'auto' }}>
+                            {filteredTransactions.map(t => (
+                                <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
+                                    <div>
+                                        <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{t.description || 'Без описания'}</div>
+                                        <div style={{ fontSize: '0.75rem', color: 'gray' }}>{formatDate(t.date)} • {t.method === 'Terminal' ? '💳' : '💵'}</div>
+                                    </div>
+                                    <div style={{ color: t.type === 'Income' ? '#4ade80' : '#f87171', fontWeight: 'bold', fontSize: '0.9rem' }}>
+                                        {t.type === 'Income' ? '+' : '-'}{t.amount}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        <button onClick={() => setMode('view')} className="btn btn-glass" style={{ width: '100%', marginTop: '1rem' }}>
+                            Назад
+                        </button>
                     </div>
                 )}
 
