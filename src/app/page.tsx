@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import OrderFormModal from '@/components/OrderFormModal';
 import CashModal from '@/components/CashModal';
+import LoginPage from '@/components/LoginPage';
 
 interface Order {
   id: number;
@@ -21,6 +22,23 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecking, setAuthChecking] = useState(true);
+
+  const checkAuth = async () => {
+    try {
+      const res = await fetch('/api/orders');
+      if (res.status === 401) {
+        setIsAuthenticated(false);
+      } else {
+        setIsAuthenticated(true);
+      }
+    } catch (e) {
+      setIsAuthenticated(false);
+    } finally {
+      setAuthChecking(false);
+    }
+  };
 
   const fetchOrders = async () => {
     try {
@@ -37,8 +55,14 @@ export default function Home() {
   };
 
   useEffect(() => {
-    fetchOrders();
+    checkAuth();
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchOrders();
+    }
+  }, [isAuthenticated]);
 
   const handleCreateOrder = async (data: any) => {
     try {
@@ -54,6 +78,30 @@ export default function Home() {
       console.error(e);
     }
   };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+      setIsAuthenticated(false);
+      setOrders([]);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // Show loading while checking auth
+  if (authChecking) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: 'var(--text-secondary)' }}>Загрузка...</div>
+      </div>
+    );
+  }
+
+  // Show login page if not authenticated
+  if (!isAuthenticated) {
+    return <LoginPage onSuccess={() => setIsAuthenticated(true)} />;
+  }
 
   return (
     <main className="container" style={{ padding: '2rem 1rem' }}>
@@ -81,6 +129,13 @@ export default function Home() {
             className="btn btn-primary"
           >
             + Принять Заказ
+          </button>
+          <button
+            onClick={handleLogout}
+            className="btn btn-glass"
+            style={{ color: '#f87171' }}
+          >
+            🚪 Выход
           </button>
         </div>
       </div>
