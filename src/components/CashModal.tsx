@@ -310,10 +310,11 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                                     background: txType === 'Income' ? '#4ade80' : '#f87171',
                                     color: 'black',
                                     fontWeight: 'bold',
-                                    border: 'none'
+                                    border: 'none',
+                                    fontSize: '1.1rem'
                                 }}
                             >
-                                Подтвердить
+                                ✓ Выполнить
                             </button>
                         </div>
                     </form>
