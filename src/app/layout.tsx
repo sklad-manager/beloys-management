@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import PWAInit from '@/components/PWAInit';
 
 export const metadata: Metadata = {
   title: 'Belous Management',
@@ -29,6 +30,7 @@ export default function RootLayout({
       </head>
       <body>
         <div className="ambient-glow" />
+        <PWAInit />
         {children}
       </body>
     </html>

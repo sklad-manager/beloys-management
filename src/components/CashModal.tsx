@@ -187,7 +187,7 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
             justifyContent: 'center',
             zIndex: 1000
         }}>
-            <div className="glass-card" style={{ width: '100%', maxWidth: '700px', height: '80vh', display: 'flex', flexDirection: 'column', position: 'relative', margin: '0 1rem' }}>
+            <div className="glass-card" style={{ width: '100%', maxWidth: '1100px', height: '97vh', display: 'flex', flexDirection: 'column', position: 'relative', margin: '0 1rem' }}>
 
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
@@ -415,13 +415,7 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                     <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
                         <h3 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>📈 Отчет по кассе</h3>
 
-                        {/* Quick Filters */}
-                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
-                            <button onClick={() => setQuickFilter(0)} className="btn btn-glass" style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', flex: 1 }}>Сегодня</button>
-                            <button onClick={() => setQuickFilter(1)} className="btn btn-glass" style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', flex: 1 }}>Вчера</button>
-                            <button onClick={() => setQuickFilter(7)} className="btn btn-glass" style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', flex: 1 }}>Неделя</button>
-                            <button onClick={() => setQuickFilter(30)} className="btn btn-glass" style={{ fontSize: '0.8rem', whiteSpace: 'nowrap', flex: 1 }}>Месяц</button>
-                        </div>
+
 
                         {/* Date Inputs */}
                         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>

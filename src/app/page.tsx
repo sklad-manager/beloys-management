@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import OrderFormModal from '@/components/OrderFormModal';
 import CashModal from '@/components/CashModal';
 import LoginPage from '@/components/LoginPage';
+import ThreeDotsMenu from '@/components/ThreeDotsMenu';
 
 interface Order {
   id: number;
@@ -130,13 +131,7 @@ export default function Home() {
           >
             + Принять Заказ
           </button>
-          <button
-            onClick={handleLogout}
-            className="btn btn-glass"
-            style={{ color: '#f87171' }}
-          >
-            🚪 Выход
-          </button>
+          <ThreeDotsMenu onLogout={handleLogout} />
         </div>
       </div>
 
