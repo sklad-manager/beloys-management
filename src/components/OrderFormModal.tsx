@@ -73,14 +73,12 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
                 prepayment: '',
                 paymentMethod: 'Cash',
                 comment: '',
-                comment: '',
                 quantity: 1,
                 masterId: null,
                 masterName: ''
             });
             setServiceItems([{ id: Date.now(), value: '' }]);
             setFoundClient(null);
-            setClientSuggestions([]);
             setClientSuggestions([]);
             setShowClientSuggestions(false);
 
