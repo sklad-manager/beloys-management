@@ -22,8 +22,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
         prepayment: '',
         paymentMethod: 'Cash',
         comment: '',
-        comment: '',
-        comment: '',
+
         quantity: 1,
         masterId: null as number | null,
         masterName: ''
