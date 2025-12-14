@@ -25,6 +25,15 @@ model ReferenceItem {
   value    String
 }
 
+model Client {
+  id        Int      @id @default(autoincrement())
+  name      String
+  phone     String   @unique
+  notes     String?
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
 model Order {
   id              Int      @id @default(autoincrement()) // Internal ID
   orderNumber     String   @unique // "000001"
@@ -34,6 +43,8 @@ model Order {
   // Client Info
   clientName      String
   phone           String
+  clientId        Int?
+  client          Client?  @relation(fields: [clientId], references: [id])
   
   // Item Info
   shoeType        String

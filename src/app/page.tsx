@@ -5,6 +5,8 @@ import OrderFormModal from '@/components/OrderFormModal';
 import CashModal from '@/components/CashModal';
 import LoginPage from '@/components/LoginPage';
 import ThreeDotsMenu from '@/components/ThreeDotsMenu';
+import AdminAuthModal from '@/components/AdminAuthModal';
+import AdminDashboardModal from '@/components/AdminDashboardModal';
 
 interface Order {
   id: number;
@@ -22,6 +24,8 @@ export default function Home() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
+  const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
+  const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
@@ -126,6 +130,12 @@ export default function Home() {
             💰 Касса
           </button>
           <button
+            onClick={() => setIsAdminAuthOpen(true)}
+            className="btn btn-glass"
+          >
+            🔒 Админ
+          </button>
+          <button
             onClick={() => setIsModalOpen(true)}
             className="btn btn-primary"
           >
@@ -198,6 +208,20 @@ export default function Home() {
       <CashModal
         isOpen={isCashModalOpen}
         onClose={() => setIsCashModalOpen(false)}
+      />
+
+      <AdminAuthModal
+        isOpen={isAdminAuthOpen}
+        onClose={() => setIsAdminAuthOpen(false)}
+        onSuccess={() => {
+          setIsAdminAuthOpen(false);
+          setIsAdminDashboardOpen(true);
+        }}
+      />
+
+      <AdminDashboardModal
+        isOpen={isAdminDashboardOpen}
+        onClose={() => setIsAdminDashboardOpen(false)}
       />
     </main>
   );
