@@ -1,11 +1,27 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export async function GET() {
+export async function GET(req: Request) {
     try {
+        const { searchParams } = new URL(req.url);
+        const search = searchParams.get('search');
+
+        let whereClause: any = {};
+
+        if (search) {
+            whereClause = {
+                OR: [
+                    { orderNumber: { contains: search, mode: 'insensitive' } },
+                    { clientName: { contains: search, mode: 'insensitive' } },
+                    { phone: { contains: search, mode: 'insensitive' } }
+                ]
+            };
+        }
+
         const orders = await prisma.order.findMany({
+            where: whereClause,
             orderBy: { createdAt: 'desc' },
-            take: 50,
+            take: search ? 100 : 50, // Increase limit for search results
             include: { client: true }
         });
 
@@ -96,7 +112,7 @@ export async function POST(req: Request) {
                 services: services || '',
                 price: parseFloat(price),
                 comment: comment || '',
-                quantity: quantity || 1,
+                quantity: quantity ? parseInt(quantity) : 1,
                 masterPrice: 0, // Assuming default values for these
                 materialPrice: 0,
                 paymentDate: null,

@@ -71,6 +71,19 @@ model Order {
   master          Master?  @relation(fields: [masterId], references: [id])
   
   status          String   @default("Принят в работу") // "Принят в работу", "Выполнен", "Закрыт"
+  editCount       Int      @default(0)
+  
+  editLogs        OrderEditLog[]
+}
+
+model OrderEditLog {
+  id        Int      @id @default(autoincrement())
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id])
+  oldData   String   // JSON
+  newData   String   // JSON
+  diff      String?
+  changedAt DateTime @default(now())
 }
 
 model SalaryLog {

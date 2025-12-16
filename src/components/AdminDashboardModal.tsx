@@ -11,12 +11,23 @@ interface Master {
     percentage: number;
 }
 
+interface EditLog {
+    id: number;
+    orderNumber: string;
+    oldData: any;
+    newData: any;
+    date: string;
+}
+
 export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardModalProps) {
     const [activeTab, setActiveTab] = useState('masters');
     const [masters, setMasters] = useState<Master[]>([]);
     const [newMasterName, setNewMasterName] = useState('');
     const [newMasterPercentage, setNewMasterPercentage] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const [salaryLogs, setSalaryLogs] = useState<any[]>([]);
+    const [editLogs, setEditLogs] = useState<EditLog[]>([]);
 
     useEffect(() => {
         if (isOpen) {
@@ -36,6 +47,30 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
             console.error(e);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchSalaryLogs = async () => {
+        try {
+            const res = await fetch('/api/salary-logs');
+            if (res.ok) {
+                const data = await res.json();
+                setSalaryLogs(data);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
+
+    const fetchEditLogs = async () => {
+        try {
+            const res = await fetch('/api/admin/edit-logs');
+            if (res.ok) {
+                const data = await res.json();
+                setEditLogs(data);
+            }
+        } catch (e) {
+            console.error(e);
         }
     };
 
@@ -74,6 +109,23 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
         }
     };
 
+    // Helper to compare and show changes
+    const renderChanges = (oldD: any, newD: any) => {
+        const changes: string[] = [];
+        if (oldD.price !== newD.price) changes.push(`Цена: ${oldD.price} -> ${newD.price}`);
+        if (oldD.shoeType !== newD.shoeType) changes.push(`Изделие: ${oldD.shoeType} -> ${newD.shoeType}`);
+        if (oldD.comment !== newD.comment) changes.push(`Коммент изменен`);
+        if (oldD.masterId !== newD.masterId) changes.push(`Мастер изменен`);
+
+        if (changes.length === 0) return <span style={{ color: 'gray' }}>Незначительные изменения</span>;
+
+        return (
+            <div style={{ fontSize: '0.85rem' }}>
+                {changes.map((c, i) => <div key={i}>{c}</div>)}
+            </div>
+        );
+    };
+
     if (!isOpen) return null;
 
     const overlayStyle: React.CSSProperties = {
@@ -95,7 +147,7 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
         padding: '2rem',
         borderRadius: '16px',
         width: '90%',
-        maxWidth: '800px',
+        maxWidth: '900px',
         height: '80vh',
         display: 'flex',
         flexDirection: 'column',
@@ -112,6 +164,16 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
         outline: 'none'
     };
 
+    const tabStyle = (isActive: boolean): React.CSSProperties => ({
+        padding: '0.5rem 1rem',
+        background: 'none',
+        border: 'none',
+        color: isActive ? '#4cc9f0' : '#8d99ae',
+        borderBottom: isActive ? '2px solid #4cc9f0' : 'none',
+        cursor: 'pointer',
+        fontSize: '1.1rem'
+    });
+
     return (
         <div style={overlayStyle} onClick={onClose}>
             <div style={modalStyle} onClick={e => e.stopPropagation()}>
@@ -121,21 +183,15 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                 </div>
 
                 <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
-                    <button
-                        style={{
-                            padding: '0.5rem 1rem',
-                            background: 'none',
-                            border: 'none',
-                            color: activeTab === 'masters' ? '#4cc9f0' : '#8d99ae',
-                            borderBottom: activeTab === 'masters' ? '2px solid #4cc9f0' : 'none',
-                            cursor: 'pointer',
-                            fontSize: '1.1rem'
-                        }}
-                        onClick={() => setActiveTab('masters')}
-                    >
+                    <button style={tabStyle(activeTab === 'masters')} onClick={() => setActiveTab('masters')}>
                         Мастера
                     </button>
-                    {/* Add other tabs here like Settings later */}
+                    <button style={tabStyle(activeTab === 'salaries')} onClick={() => { setActiveTab('salaries'); fetchSalaryLogs(); }}>
+                        Зарплата
+                    </button>
+                    <button style={tabStyle(activeTab === 'edits')} onClick={() => { setActiveTab('edits'); fetchEditLogs(); }}>
+                        Редактируемые
+                    </button>
                 </div>
 
                 <div style={{ flex: 1, overflowY: 'auto' }}>
@@ -188,6 +244,87 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                     <p style={{ color: '#8d99ae', textAlign: 'center' }}>Мастеров пока нет</p>
                                 )}
                             </div>
+                        </div>
+                    )}
+
+                    {activeTab === 'salaries' && (
+                        <div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e5e5e5' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
+                                        <th style={{ padding: '1rem' }}>Дата</th>
+                                        <th style={{ padding: '1rem' }}>Мастер</th>
+                                        <th style={{ padding: '1rem' }}>Заказ</th>
+                                        <th style={{ padding: '1rem' }}>Сумма</th>
+                                        <th style={{ padding: '1rem' }}>Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {salaryLogs.map((log) => (
+                                        <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <td style={{ padding: '1rem' }}>
+                                                {new Date(log.date).toLocaleDateString()}
+                                            </td>
+                                            <td style={{ padding: '1rem' }}>{log.master?.name || '-'}</td>
+                                            <td style={{ padding: '1rem', fontFamily: 'monospace' }}>#{log.orderNumber}</td>
+                                            <td style={{ padding: '1rem', color: '#4ade80' }}>
+                                                {log.amount.toFixed(2)} грн
+                                            </td>
+                                            <td style={{ padding: '1rem' }}>
+                                                {log.isPaid ?
+                                                    <span style={{ color: '#4ade80', fontSize: '0.8rem', border: '1px solid #4ade80', padding: '2px 8px', borderRadius: '10px' }}>Оплачено</span> :
+                                                    <span style={{ color: '#fb923c', fontSize: '0.8rem', border: '1px solid #fb923c', padding: '2px 8px', borderRadius: '10px' }}>Не оплачено</span>
+                                                }
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {salaryLogs.length === 0 && (
+                                        <tr>
+                                            <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'gray' }}>
+                                                Нет начислений
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {activeTab === 'edits' && (
+                        <div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e5e5e5' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
+                                        <th style={{ padding: '1rem' }}>Дата / Время</th>
+                                        <th style={{ padding: '1rem' }}>Заказ</th>
+                                        <th style={{ padding: '1rem' }}>Изменения</th>
+                                        <th style={{ padding: '1rem' }}>Тип</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {editLogs.map((log) => (
+                                        <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <td style={{ padding: '1rem' }}>
+                                                {new Date(log.date).toLocaleString()}
+                                            </td>
+                                            <td style={{ padding: '1rem', fontFamily: 'monospace' }}>#{log.orderNumber}</td>
+                                            <td style={{ padding: '1rem' }}>
+                                                {renderChanges(log.oldData, log.newData)}
+                                            </td>
+                                            <td style={{ padding: '1rem', color: '#fb923c' }}>
+                                                Редактирование
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {editLogs.length === 0 && (
+                                        <tr>
+                                            <td colSpan={4} style={{ padding: '2rem', textAlign: 'center', color: 'gray' }}>
+                                                Истории изменений нет
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </div>

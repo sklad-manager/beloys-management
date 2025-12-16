@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import OrderFormModal from '@/components/OrderFormModal';
 import CashModal from '@/components/CashModal';
 import LoginPage from '@/components/LoginPage';
 import ThreeDotsMenu from '@/components/ThreeDotsMenu';
 import AdminAuthModal from '@/components/AdminAuthModal';
 import AdminDashboardModal from '@/components/AdminDashboardModal';
+import StatusBadge from '@/components/StatusBadge';
 
 interface Order {
   id: number;
@@ -18,10 +20,15 @@ interface Order {
   price: number;
   status: string;
   createdAt: string;
+  prepaymentCash: number;
+  prepaymentTerminal: number;
 }
 
 export default function Home() {
+  const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
+  const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
@@ -45,9 +52,10 @@ export default function Home() {
     }
   };
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (query = '') => {
     try {
-      const res = await fetch('/api/orders');
+      const url = query ? `/api/orders?search=${encodeURIComponent(query)}` : '/api/orders';
+      const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();
         setOrders(data);
@@ -65,9 +73,12 @@ export default function Home() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      fetchOrders();
+      const timer = setTimeout(() => {
+        fetchOrders(searchQuery);
+      }, 500); // Debounce search
+      return () => clearTimeout(timer);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, searchQuery]);
 
   const handleCreateOrder = async (data: any) => {
     try {
@@ -122,7 +133,36 @@ export default function Home() {
           <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Belous <span className="text-gradient">Management</span></h1>
           <p>Панель управления заказами</p>
         </div>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+          <div className="relative" style={{ marginRight: '0.5rem' }}>
+            <input
+              type="text"
+              placeholder="Поиск..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="input"
+              style={{ paddingLeft: '2.5rem', width: '220px' }}
+            />
+            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+          </div>
+
+          <button
+            onClick={() => selectedOrderId && router.push(`/orders/${selectedOrderId}`)}
+            disabled={!selectedOrderId}
+            className="btn"
+            style={{
+              background: selectedOrderId ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.05)',
+              opacity: selectedOrderId ? 1 : 0.5,
+              cursor: selectedOrderId ? 'pointer' : 'not-allowed',
+              border: '1px solid var(--border-subtle)',
+              color: 'white',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            👁️ Просмотр
+          </button>
+
           <button
             onClick={() => setIsCashModalOpen(true)}
             className="btn btn-glass"
@@ -145,59 +185,70 @@ export default function Home() {
         </div>
       </div>
 
-      {loading ? (
-        <div style={{ textAlign: 'center', color: 'gray' }}>Загрузка...</div>
-      ) : (
-        <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
-              <thead style={{ background: 'rgba(255,255,255,0.05)' }}>
-                <tr>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>№</th>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>Клиент</th>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>Изделие</th>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>Цена</th>
-                  <th style={{ padding: '1rem', textAlign: 'left' }}>Статус</th>
-                </tr>
-              </thead>
-              <tbody>
-                {orders.length === 0 ? (
+      {
+        loading ? (
+          <div style={{ textAlign: 'center', color: 'gray' }}>Загрузка...</div>
+        ) : (
+          <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
+            <div style={{ overflowX: 'auto' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
+                <thead style={{ background: 'rgba(255,255,255,0.05)' }}>
                   <tr>
-                    <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'gray' }}>
-                      Заказов пока нет
-                    </td>
+                    <th style={{ padding: '1rem', textAlign: 'left' }}>№</th>
+                    <th style={{ padding: '1rem', textAlign: 'left' }}>Клиент</th>
+                    <th style={{ padding: '1rem', textAlign: 'left' }}>Изделие</th>
+                    <th style={{ padding: '1rem', textAlign: 'left' }}>Цена</th>
+                    <th style={{ padding: '1rem', textAlign: 'left' }}>Статус</th>
                   </tr>
-                ) : (
-                  orders.map((order) => (
-                    <tr key={order.id} style={{ borderTop: '1px solid var(--border-subtle)' }}>
-                      <td style={{ padding: '1rem', fontFamily: 'monospace' }}>#{order.orderNumber}</td>
-                      <td style={{ padding: '1rem' }}>
-                        <div style={{ fontWeight: '600' }}>{order.clientName}</div>
-                        <div style={{ fontSize: '0.8rem', color: 'gray' }}>{order.phone}</div>
-                      </td>
-                      <td style={{ padding: '1rem' }}>
-                        {order.shoeType} <span style={{ color: 'gray' }}>{order.brand}</span>
-                      </td>
-                      <td style={{ padding: '1rem' }}>{order.price} грн</td>
-                      <td style={{ padding: '1rem' }}>
-                        <span style={{
-                          background: 'rgba(99, 102, 241, 0.2)',
-                          color: '#a5b4fc',
-                          padding: '0.25rem 0.75rem',
-                          borderRadius: '20px',
-                          fontSize: '0.85rem'
-                        }}>
-                          {order.status}
-                        </span>
+                </thead>
+                <tbody>
+                  {orders.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'gray' }}>
+                        Заказов пока нет
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    orders.map((order) => (
+                      <tr
+                        key={order.id}
+                        style={{
+                          borderTop: '1px solid var(--border-subtle)',
+                          cursor: 'pointer',
+                          background: selectedOrderId === order.id ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
+                          borderLeft: selectedOrderId === order.id ? '2px solid var(--accent-primary)' : '2px solid transparent'
+                        }}
+                        className="hover:bg-white/5 transition-colors"
+                        onClick={() => setSelectedOrderId(order.id === selectedOrderId ? null : order.id)}
+                      >
+                        <td style={{ padding: '1rem', fontFamily: 'monospace' }}>#{order.orderNumber}</td>
+                        <td style={{ padding: '1rem' }}>
+                          <div style={{ fontWeight: '600' }}>{order.clientName}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'gray' }}>{order.phone}</div>
+                        </td>
+                        <td style={{ padding: '1rem' }}>
+                          {order.shoeType} <span style={{ color: 'gray' }}>{order.brand}</span>
+                        </td>
+                        <td style={{ padding: '1rem' }}>{order.price} грн</td>
+                        <td style={{ padding: '1rem' }} onClick={(e) => e.stopPropagation()}>
+                          <StatusBadge
+                            status={order.status}
+                            orderId={order.id}
+                            onUpdate={() => fetchOrders(searchQuery)}
+                            totalPrice={order.price}
+                            prepayment={(order.prepaymentCash || 0) + (order.prepaymentTerminal || 0)}
+                            orderNumber={order.orderNumber}
+                          />
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       <OrderFormModal
         isOpen={isModalOpen}
