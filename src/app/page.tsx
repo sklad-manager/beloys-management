@@ -54,7 +54,9 @@ export default function Home() {
 
   const fetchOrders = async (query = '') => {
     try {
-      const url = query ? `/api/orders?search=${encodeURIComponent(query)}` : '/api/orders';
+      const url = query
+        ? `/api/orders?search=${encodeURIComponent(query)}&view=active`
+        : '/api/orders?view=active';
       const res = await fetch(url);
       if (res.ok) {
         const data = await res.json();

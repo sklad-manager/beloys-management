@@ -22,6 +22,7 @@ interface EditLog {
 export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardModalProps) {
     const [activeTab, setActiveTab] = useState('masters');
     const [masters, setMasters] = useState<Master[]>([]);
+    const [archivedOrders, setArchivedOrders] = useState<any[]>([]);
     const [newMasterName, setNewMasterName] = useState('');
     const [newMasterPercentage, setNewMasterPercentage] = useState('');
     const [loading, setLoading] = useState(false);
@@ -71,6 +72,21 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
             }
         } catch (e) {
             console.error(e);
+        }
+    };
+
+    const fetchArchivedOrders = async () => {
+        setLoading(true);
+        try {
+            const res = await fetch('/api/orders?view=archive');
+            if (res.ok) {
+                const data = await res.json();
+                setArchivedOrders(data);
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -191,6 +207,9 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                     </button>
                     <button style={tabStyle(activeTab === 'edits')} onClick={() => { setActiveTab('edits'); fetchEditLogs(); }}>
                         Редактируемые
+                    </button>
+                    <button style={tabStyle(activeTab === 'archive')} onClick={() => { setActiveTab('archive'); fetchArchivedOrders(); }}>
+                        Архив
                     </button>
                 </div>
 
@@ -320,6 +339,63 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                         <tr>
                                             <td colSpan={4} style={{ padding: '2rem', textAlign: 'center', color: 'gray' }}>
                                                 Истории изменений нет
+                                            </td>
+                                        </tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {activeTab === 'archive' && (
+                        <div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e5e5e5' }}>
+                                <thead>
+                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
+                                        <th style={{ padding: '1rem' }}>Дата</th>
+                                        <th style={{ padding: '1rem' }}>№</th>
+                                        <th style={{ padding: '1rem' }}>Клиент</th>
+                                        <th style={{ padding: '1rem' }}>Изделие</th>
+                                        <th style={{ padding: '1rem' }}>Сумма</th>
+                                        <th style={{ padding: '1rem' }}>Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {loading ? (
+                                        <tr><td colSpan={6} style={{ padding: '2rem', textAlign: 'center' }}>Загрузка...</td></tr>
+                                    ) : archivedOrders.map((order) => (
+                                        <tr key={order.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                            <td style={{ padding: '1rem' }}>
+                                                {new Date(order.createdAt).toLocaleDateString()}
+                                            </td>
+                                            <td style={{ padding: '1rem', fontFamily: 'monospace' }}>#{order.orderNumber}</td>
+                                            <td style={{ padding: '1rem' }}>
+                                                <div>{order.clientName}</div>
+                                                <div style={{ fontSize: '0.8rem', color: 'gray' }}>{order.phone}</div>
+                                            </td>
+                                            <td style={{ padding: '1rem' }}>
+                                                {order.shoeType}
+                                            </td>
+                                            <td style={{ padding: '1rem', color: '#4ade80' }}>
+                                                {order.price} грн
+                                            </td>
+                                            <td style={{ padding: '1rem' }}>
+                                                <span style={{
+                                                    color: '#9ca3af',
+                                                    border: '1px solid #4b5563',
+                                                    padding: '2px 8px',
+                                                    borderRadius: '10px',
+                                                    fontSize: '0.8rem'
+                                                }}>
+                                                    {order.status}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {archivedOrders.length === 0 && !loading && (
+                                        <tr>
+                                            <td colSpan={6} style={{ padding: '2rem', textAlign: 'center', color: 'gray' }}>
+                                                Архив пуст
                                             </td>
                                         </tr>
                                     )}

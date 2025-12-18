@@ -5,23 +5,37 @@ export async function GET(req: Request) {
     try {
         const { searchParams } = new URL(req.url);
         const search = searchParams.get('search');
+        const view = searchParams.get('view'); // 'active' (default) | 'archive' | 'all'
 
         let whereClause: any = {};
 
+        // 1. Status Filter
+        if (view === 'archive') {
+            whereClause.status = 'Выдан';
+        } else if (view === 'all') {
+            // No status filter
+        } else {
+            // Default: 'active' -> show everything EXCEPT 'Выдан'
+            whereClause.status = { not: 'Выдан' };
+        }
+
+        // 2. Search Filter (AND logic)
         if (search) {
-            whereClause = {
-                OR: [
-                    { orderNumber: { contains: search, mode: 'insensitive' } },
-                    { clientName: { contains: search, mode: 'insensitive' } },
-                    { phone: { contains: search, mode: 'insensitive' } }
-                ]
-            };
+            whereClause.AND = [
+                {
+                    OR: [
+                        { orderNumber: { contains: search, mode: 'insensitive' } },
+                        { clientName: { contains: search, mode: 'insensitive' } },
+                        { phone: { contains: search, mode: 'insensitive' } }
+                    ]
+                }
+            ];
         }
 
         const orders = await prisma.order.findMany({
             where: whereClause,
             orderBy: { createdAt: 'desc' },
-            take: search ? 100 : 50, // Increase limit for search results
+            take: search ? 100 : (view === 'archive' ? 50 : 100), // Limit results
             include: { client: true }
         });
 
