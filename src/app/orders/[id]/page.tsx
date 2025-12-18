@@ -1,8 +1,7 @@
-'use client';
-
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import StatusBadge from '@/components/StatusBadge';
+import PaymentConfirmationModal from '@/components/PaymentConfirmationModal';
 
 interface Order {
     id: number;
@@ -33,6 +32,10 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
     const [saving, setSaving] = useState(false);
+
+    // Payment Modal State
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+    const [paymentDetails, setPaymentDetails] = useState({ amount: 0, prepayment: 0 });
 
     const [formData, setFormData] = useState<any>({});
     const [masters, setMasters] = useState<{ id: number, name: string }[]>([]);
@@ -108,6 +111,29 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+
+    const handlePaymentConfirm = async (amount: number, method: 'Cash' | 'Terminal') => {
+        try {
+            const res = await fetch(`/api/orders/${id}/complete`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    paymentAmount: amount,
+                    paymentMethod: method
+                }),
+            });
+
+            if (res.ok) {
+                setPaymentModalOpen(false);
+                fetchOrder(); // Refresh status
+            } else {
+                alert('Ошибка при проведении платежа');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Ошибка сети');
+        }
     };
 
     if (loading) return <div className="flex justify-center items-center h-screen text-gray-500">Загрузка...</div>;
@@ -192,6 +218,10 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                         totalPrice={order.price}
                         prepayment={order.prepaymentCash + order.prepaymentTerminal}
                         orderNumber={order.orderNumber}
+                        onRequestPayment={(oid, onum, remaining, prep) => {
+                            setPaymentDetails({ amount: remaining, prepayment: prep });
+                            setPaymentModalOpen(true);
+                        }}
                     />
                 </div>
 
@@ -349,6 +379,17 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                     </div>
                 </form>
             </div>
+
+            {order && (
+                <PaymentConfirmationModal
+                    isOpen={paymentModalOpen}
+                    onClose={() => setPaymentModalOpen(false)}
+                    onConfirm={handlePaymentConfirm}
+                    totalPrice={order.price}
+                    prepayment={paymentDetails.prepayment}
+                    orderNumber={order.orderNumber}
+                />
+            )}
         </main>
     );
 }
