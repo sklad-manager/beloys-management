@@ -38,30 +38,30 @@ export default function PaymentConfirmationModal({
             position: 'fixed',
             top: 0,
             left: 0,
-            right: 0,
-            bottom: 0,
+            width: '100vw',
+            height: '100vh',
             backgroundColor: 'rgba(0, 0, 0, 0.85)',
             zIndex: 3000,
             backdropFilter: 'blur(10px)',
             animation: 'fadeIn 0.2s ease-out',
-            overflowY: 'auto', // Allow full screen scrolling
             display: 'flex',
-            alignItems: 'flex-start', // Start from top to allow scroll
-            justifyContent: 'center',
-            padding: '2rem 1rem' // Give some breathing room
+            alignItems: 'center',
+            justifyContent: 'center'
         }}>
             <div style={{
                 background: '#16213e',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '24px',
-                width: '100%',
+                width: '90%',
                 maxWidth: '850px',
+                maxHeight: '95vh', // Safe maximum height
                 display: 'flex',
                 flexDirection: 'row',
                 boxShadow: '0 25px 50px -12px rgba(0,0,0,0.5)',
-                flexWrap: 'wrap',
-                margin: 'auto', // Auto margin vertically centers if space allows
-                position: 'relative'
+                overflow: 'hidden', // Contain internal scrolls
+                animation: 'slideUp 0.3s ease-out',
+                position: 'relative',
+                flexWrap: 'wrap'
             }}>
 
                 {/* LEFT SIDE: INFO & SUMMARY */}
