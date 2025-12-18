@@ -53,10 +53,10 @@ export default function PaymentConfirmationModal({
                 backdropFilter: 'blur(20px)',
                 border: '1px solid rgba(139, 92, 246, 0.3)',
                 borderRadius: '24px',
-                padding: '2rem',
+                padding: '1.5rem',
                 width: '90%',
                 maxWidth: '520px',
-                maxHeight: '95vh',
+                maxHeight: '85vh',
                 overflowY: 'auto',
                 boxShadow: '0 25px 50px -12px rgba(139, 92, 246, 0.25), 0 0 0 1px rgba(255,255,255,0.05)',
                 animation: 'slideUp 0.3s ease-out'
