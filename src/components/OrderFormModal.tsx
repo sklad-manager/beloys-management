@@ -359,347 +359,163 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
             justifyContent: 'center',
             zIndex: 1000
         }}>
-            <div className="glass-card" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', margin: '0 1rem' }}>
-                <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Новый Заказ</h2>
+            <div className="glass-card" style={{
+                width: '100%',
+                maxWidth: '1000px',
+                maxHeight: '90vh',
+                overflowY: 'auto',
+                margin: '1rem',
+                padding: '2rem'
+            }}>
+                <h2 style={{ marginBottom: '2rem', textAlign: 'center', fontSize: '1.8rem', color: 'var(--text-primary)' }}>Новый Заказ</h2>
 
                 <form onSubmit={handleSubmit}>
-                    {/* Клиент */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div style={{ position: 'relative' }}>
-                            <label style={labelStyle}>Имя клиента</label>
-                            <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                <input
-                                    name="clientName"
-                                    placeholder="Иван Иванов"
-                                    style={inputStyle}
-                                    value={formData.clientName}
-                                    onChange={handleClientNameChange}
-                                    autoComplete="off"
-                                />
-                                {foundClient && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsClientModalOpen(true)}
-                                        className="btn"
-                                        style={{
-                                            padding: '0 0.5rem',
-                                            fontSize: '1.2rem',
-                                            background: '#4cc9f0',
-                                            color: '#000',
-                                            border: 'none',
-                                            borderRadius: '8px',
-                                            cursor: 'pointer'
-                                        }}
-                                        title="Открыть карточку клиента"
-                                    >
-                                        📋
-                                    </button>
-                                )}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                        gap: '2.5rem',
+                        alignItems: 'start'
+                    }}>
+                        {/* Левая колонка: Информация о заказе */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                            <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem', marginBottom: '0.5rem' }}>
+                                <h3 style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', marginBottom: '1rem', fontWeight: '600' }}>📋 Детали изделия</h3>
                             </div>
-                            {showClientSuggestions && clientSuggestions.length > 0 && (
-                                <ul style={{
-                                    position: 'absolute',
-                                    top: '100%',
-                                    left: 0,
-                                    width: '100%',
-                                    background: '#1a1a2e',
-                                    border: '1px solid var(--border-subtle)',
-                                    borderRadius: '8px',
-                                    maxHeight: '200px',
-                                    overflowY: 'auto',
-                                    listStyle: 'none',
-                                    padding: 0,
-                                    margin: 0,
-                                    zIndex: 1002,
-                                    boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                                }}>
-                                    {clientSuggestions.map((client) => (
-                                        <li
-                                            key={client.id}
-                                            onClick={() => selectClient(client)}
-                                            style={{
-                                                padding: '0.75rem',
-                                                cursor: 'pointer',
-                                                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                                color: 'var(--text-primary)',
-                                                transition: 'background 0.2s'
-                                            }}
-                                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                        >
-                                            <div style={{ fontWeight: 'bold' }}>{client.name}</div>
-                                            <div style={{ fontSize: '0.8rem', color: '#8d99ae' }}>{client.phone}</div>
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                        <div>
-                            <label style={labelStyle}>Телефон</label>
-                            <input
-                                name="phone"
-                                placeholder="0991234567"
-                                style={inputStyle}
-                                value={formData.phone}
-                                onChange={handlePhoneChange}
-                                autoComplete="off"
-                            />
-                        </div>
-                    </div>
 
-                    {/* Обувь */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div style={{ position: 'relative' }}>
-                            <label style={labelStyle}>Тип обуви / Изделия</label>
-                            <input
-                                name="shoeType"
-                                placeholder="Кроссовки, Туфли..."
-                                style={inputStyle}
-                                value={formData.shoeType}
-                                onChange={handleShoeTypeChange}
-                                onFocus={() => {
-                                    if (formData.shoeType) {
-                                        const filtered = shoeTypeSuggestions.filter(item =>
-                                            item.toLowerCase().includes(formData.shoeType.toLowerCase())
-                                        );
-                                        setFilteredSuggestions(filtered);
-                                        setShowSuggestions(true);
-                                    } else {
-                                        setFilteredSuggestions(shoeTypeSuggestions);
-                                        setShowSuggestions(true);
-                                    }
-                                }}
-                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                                autoComplete="off"
-                            />
-                            {showSuggestions && filteredSuggestions.length > 0 && (
-                                <ul style={{
-                                    position: 'absolute',
-                                    top: '100%',
-                                    left: 0,
-                                    width: '100%',
-                                    background: '#1a1a2e',
-                                    border: '1px solid var(--border-subtle)',
-                                    borderRadius: '8px',
-                                    maxHeight: '200px',
-                                    overflowY: 'auto',
-                                    listStyle: 'none',
-                                    padding: 0,
-                                    margin: 0,
-                                    zIndex: 1001,
-                                    boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                                }}>
-                                    {filteredSuggestions.map((suggestion, index) => (
-                                        <li
-                                            key={index}
-                                            onClick={() => selectSuggestion(suggestion)}
-                                            style={{
-                                                padding: '0.75rem',
-                                                cursor: 'pointer',
-                                                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                                color: 'var(--text-primary)',
-                                                transition: 'background 0.2s'
-                                            }}
-                                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                        >
-                                            {suggestion}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                        <div style={{ position: 'relative' }}>
-                            <label style={labelStyle}>Бренд</label>
-                            <input
-                                name="brand"
-                                placeholder="Nike, Gucci..."
-                                style={inputStyle}
-                                value={formData.brand}
-                                onChange={handleBrandChange}
-                                onFocus={() => {
-                                    if (formData.brand) {
-                                        const filtered = brandSuggestions.filter(item =>
-                                            item.toLowerCase().includes(formData.brand.toLowerCase())
-                                        );
-                                        setFilteredBrandSuggestions(filtered);
-                                        setShowBrandSuggestions(true);
-                                    } else {
-                                        setFilteredBrandSuggestions(brandSuggestions);
-                                        setShowBrandSuggestions(true);
-                                    }
-                                }}
-                                onBlur={() => setTimeout(() => setShowBrandSuggestions(false), 200)}
-                                autoComplete="off"
-                            />
-                            {showBrandSuggestions && filteredBrandSuggestions.length > 0 && (
-                                <ul style={{
-                                    position: 'absolute',
-                                    top: '100%',
-                                    left: 0,
-                                    width: '100%',
-                                    background: '#1a1a2e',
-                                    border: '1px solid var(--border-subtle)',
-                                    borderRadius: '8px',
-                                    maxHeight: '200px',
-                                    overflowY: 'auto',
-                                    listStyle: 'none',
-                                    padding: 0,
-                                    margin: 0,
-                                    zIndex: 1001,
-                                    boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                                }}>
-                                    {filteredBrandSuggestions.map((suggestion, index) => (
-                                        <li
-                                            key={index}
-                                            onClick={() => selectBrandSuggestion(suggestion)}
-                                            style={{
-                                                padding: '0.75rem',
-                                                cursor: 'pointer',
-                                                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                                color: 'var(--text-primary)',
-                                                transition: 'background 0.2s'
-                                            }}
-                                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                        >
-                                            {suggestion}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Детали */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                        <div style={{ position: 'relative' }}>
-                            <label style={labelStyle}>Цвет</label>
-                            <input
-                                name="color"
-                                placeholder="Черный"
-                                style={inputStyle}
-                                value={formData.color}
-                                onChange={handleColorChange}
-                                onFocus={() => {
-                                    if (formData.color) {
-                                        const filtered = colorSuggestions.filter(item =>
-                                            item.toLowerCase().includes(formData.color.toLowerCase())
-                                        );
-                                        setFilteredColorSuggestions(filtered);
-                                        setShowColorSuggestions(true);
-                                    } else {
-                                        setFilteredColorSuggestions(colorSuggestions);
-                                        setShowColorSuggestions(true);
-                                    }
-                                }}
-                                onBlur={() => setTimeout(() => setShowColorSuggestions(false), 200)}
-                                autoComplete="off"
-                            />
-                            {showColorSuggestions && filteredColorSuggestions.length > 0 && (
-                                <ul style={{
-                                    position: 'absolute',
-                                    top: '100%',
-                                    left: 0,
-                                    width: '100%',
-                                    background: '#1a1a2e',
-                                    border: '1px solid var(--border-subtle)',
-                                    borderRadius: '8px',
-                                    maxHeight: '200px',
-                                    overflowY: 'auto',
-                                    listStyle: 'none',
-                                    padding: 0,
-                                    margin: 0,
-                                    zIndex: 1001,
-                                    boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                                }}>
-                                    {filteredColorSuggestions.map((suggestion, index) => (
-                                        <li
-                                            key={index}
-                                            onClick={() => selectColorSuggestion(suggestion)}
-                                            style={{
-                                                padding: '0.75rem',
-                                                cursor: 'pointer',
-                                                borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                                color: 'var(--text-primary)',
-                                                transition: 'background 0.2s'
-                                            }}
-                                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                        >
-                                            {suggestion}
-                                        </li>
-                                    ))}
-                                </ul>
-                            )}
-                        </div>
-                        <div>
-                            <label style={labelStyle}>Количество</label>
-                            <input
-                                name="quantity"
-                                type="number"
-                                min="1"
-                                defaultValue="1"
-                                style={inputStyle}
-                                onChange={handleChange}
-                            />
-                        </div>
-                    </div>
-
-                    <div>
-                        <label style={labelStyle}>Услуги</label>
-                        {serviceItems.map((item, index) => (
-                            <div key={item.id} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', position: 'relative' }}>
-                                <div style={{ position: 'relative', width: '100%' }}>
-                                    <input
-                                        placeholder="Чистка, Покраска, Ремонт..."
-                                        style={{ ...inputStyle, marginBottom: 0 }}
-                                        value={item.value}
-                                        onChange={(e) => handleServiceChange(index, e.target.value)}
-                                        onFocus={() => {
-                                            if (item.value) {
-                                                const filtered = serviceSuggestions.filter(s =>
-                                                    s.toLowerCase().includes(item.value.toLowerCase())
-                                                );
-                                                setFilteredServiceSuggestions(filtered);
-                                                setActiveServiceIndex(index);
-                                            } else {
-                                                setFilteredServiceSuggestions(serviceSuggestions);
-                                                setActiveServiceIndex(index);
-                                            }
-                                        }}
-                                        onBlur={() => setTimeout(() => setActiveServiceIndex(null), 200)}
-                                        autoComplete="off"
-                                    />
-                                    {activeServiceIndex === index && filteredServiceSuggestions.length > 0 && (
+                            {/* Клиент */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div style={{ position: 'relative' }}>
+                                    <label style={labelStyle}>Имя клиента</label>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <input
+                                            name="clientName"
+                                            placeholder="Иван Иванов"
+                                            style={inputStyle}
+                                            value={formData.clientName}
+                                            onChange={handleClientNameChange}
+                                            autoComplete="off"
+                                        />
+                                        {foundClient && (
+                                            <button
+                                                type="button"
+                                                onClick={() => setIsClientModalOpen(true)}
+                                                className="btn"
+                                                style={{
+                                                    padding: '0 0.75rem',
+                                                    fontSize: '1.2rem',
+                                                    background: 'var(--accent-primary)',
+                                                    color: 'white',
+                                                    border: 'none',
+                                                    borderRadius: '10px',
+                                                    cursor: 'pointer',
+                                                    height: '46px'
+                                                }}
+                                                title="Открыть карточку клиента"
+                                            >
+                                                📋
+                                            </button>
+                                        )}
+                                    </div>
+                                    {showClientSuggestions && clientSuggestions.length > 0 && (
                                         <ul style={{
                                             position: 'absolute',
                                             top: '100%',
                                             left: 0,
                                             width: '100%',
-                                            background: '#1a1a2e',
+                                            background: '#ffffff',
                                             border: '1px solid var(--border-subtle)',
-                                            borderRadius: '8px',
+                                            borderRadius: '12px',
                                             maxHeight: '200px',
                                             overflowY: 'auto',
                                             listStyle: 'none',
-                                            padding: 0,
+                                            padding: '0.5rem 0',
                                             margin: 0,
-                                            zIndex: 1001,
-                                            boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
+                                            zIndex: 1002,
+                                            boxShadow: 'var(--shadow-lg)'
                                         }}>
-                                            {filteredServiceSuggestions.map((suggestion, i) => (
+                                            {clientSuggestions.map((client) => (
                                                 <li
-                                                    key={i}
-                                                    onClick={() => selectServiceSuggestion(suggestion)}
+                                                    key={client.id}
+                                                    onClick={() => selectClient(client)}
                                                     style={{
-                                                        padding: '0.75rem',
+                                                        padding: '0.75rem 1rem',
                                                         cursor: 'pointer',
-                                                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                                        borderBottom: '1px solid var(--border-subtle)',
                                                         color: 'var(--text-primary)',
                                                         transition: 'background 0.2s'
                                                     }}
-                                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
+                                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    <div style={{ fontWeight: '600' }}>{client.name}</div>
+                                                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{client.phone}</div>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Телефон</label>
+                                    <input
+                                        name="phone"
+                                        placeholder="0991234567"
+                                        style={inputStyle}
+                                        value={formData.phone}
+                                        onChange={handlePhoneChange}
+                                        autoComplete="off"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Обувь */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div style={{ position: 'relative' }}>
+                                    <label style={labelStyle}>Тип обуви / Изделия</label>
+                                    <input
+                                        name="shoeType"
+                                        placeholder="Кроссовки, Туфли..."
+                                        style={inputStyle}
+                                        value={formData.shoeType}
+                                        onChange={handleShoeTypeChange}
+                                        onFocus={() => {
+                                            const filtered = formData.shoeType
+                                                ? shoeTypeSuggestions.filter(item => item.toLowerCase().includes(formData.shoeType.toLowerCase()))
+                                                : shoeTypeSuggestions;
+                                            setFilteredSuggestions(filtered);
+                                            setShowSuggestions(true);
+                                        }}
+                                        onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                                        autoComplete="off"
+                                    />
+                                    {showSuggestions && filteredSuggestions.length > 0 && (
+                                        <ul style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            width: '100%',
+                                            background: '#ffffff',
+                                            border: '1px solid var(--border-subtle)',
+                                            borderRadius: '12px',
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            listStyle: 'none',
+                                            padding: '0.5rem 0',
+                                            margin: 0,
+                                            zIndex: 1001,
+                                            boxShadow: 'var(--shadow-lg)'
+                                        }}>
+                                            {filteredSuggestions.map((suggestion, index) => (
+                                                <li
+                                                    key={index}
+                                                    onClick={() => selectSuggestion(suggestion)}
+                                                    style={{
+                                                        padding: '0.75rem 1rem',
+                                                        cursor: 'pointer',
+                                                        borderBottom: '1px solid var(--border-subtle)',
+                                                        color: 'var(--text-primary)',
+                                                        transition: 'background 0.2s'
+                                                    }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
                                                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                                                 >
                                                     {suggestion}
@@ -708,152 +524,403 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
                                         </ul>
                                     )}
                                 </div>
-                                {serviceItems.length > 1 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => removeServiceField(index)}
-                                        className="btn"
-                                        style={{ padding: '0 1rem', background: 'rgba(255,0,0,0.2)', color: '#ff6b6b' }}
-                                    >
-                                        ✕
-                                    </button>
+                                <div style={{ position: 'relative' }}>
+                                    <label style={labelStyle}>Бренд</label>
+                                    <input
+                                        name="brand"
+                                        placeholder="Nike, Gucci..."
+                                        style={inputStyle}
+                                        value={formData.brand}
+                                        onChange={handleBrandChange}
+                                        onFocus={() => {
+                                            const filtered = formData.brand
+                                                ? brandSuggestions.filter(item => item.toLowerCase().includes(formData.brand.toLowerCase()))
+                                                : brandSuggestions;
+                                            setFilteredBrandSuggestions(filtered);
+                                            setShowBrandSuggestions(true);
+                                        }}
+                                        onBlur={() => setTimeout(() => setShowBrandSuggestions(false), 200)}
+                                        autoComplete="off"
+                                    />
+                                    {showBrandSuggestions && filteredBrandSuggestions.length > 0 && (
+                                        <ul style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            width: '100%',
+                                            background: '#ffffff',
+                                            border: '1px solid var(--border-subtle)',
+                                            borderRadius: '12px',
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            listStyle: 'none',
+                                            padding: '0.5rem 0',
+                                            margin: 0,
+                                            zIndex: 1001,
+                                            boxShadow: 'var(--shadow-lg)'
+                                        }}>
+                                            {filteredBrandSuggestions.map((suggestion, index) => (
+                                                <li
+                                                    key={index}
+                                                    onClick={() => selectBrandSuggestion(suggestion)}
+                                                    style={{
+                                                        padding: '0.75rem 1rem',
+                                                        cursor: 'pointer',
+                                                        borderBottom: '1px solid var(--border-subtle)',
+                                                        color: 'var(--text-primary)',
+                                                        transition: 'background 0.2s'
+                                                    }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    {suggestion}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Детали */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                                <div style={{ position: 'relative' }}>
+                                    <label style={labelStyle}>Цвет</label>
+                                    <input
+                                        name="color"
+                                        placeholder="Черный"
+                                        style={inputStyle}
+                                        value={formData.color}
+                                        onChange={handleColorChange}
+                                        onFocus={() => {
+                                            const filtered = formData.color
+                                                ? colorSuggestions.filter(item => item.toLowerCase().includes(formData.color.toLowerCase()))
+                                                : colorSuggestions;
+                                            setFilteredColorSuggestions(filtered);
+                                            setShowColorSuggestions(true);
+                                        }}
+                                        onBlur={() => setTimeout(() => setShowColorSuggestions(false), 200)}
+                                        autoComplete="off"
+                                    />
+                                    {showColorSuggestions && filteredColorSuggestions.length > 0 && (
+                                        <ul style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            left: 0,
+                                            width: '100%',
+                                            background: '#ffffff',
+                                            border: '1px solid var(--border-subtle)',
+                                            borderRadius: '12px',
+                                            maxHeight: '200px',
+                                            overflowY: 'auto',
+                                            listStyle: 'none',
+                                            padding: '0.5rem 0',
+                                            margin: 0,
+                                            zIndex: 1001,
+                                            boxShadow: 'var(--shadow-lg)'
+                                        }}>
+                                            {filteredColorSuggestions.map((suggestion, index) => (
+                                                <li
+                                                    key={index}
+                                                    onClick={() => selectColorSuggestion(suggestion)}
+                                                    style={{
+                                                        padding: '0.75rem 1rem',
+                                                        cursor: 'pointer',
+                                                        borderBottom: '1px solid var(--border-subtle)',
+                                                        color: 'var(--text-primary)',
+                                                        transition: 'background 0.2s'
+                                                    }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                                >
+                                                    {suggestion}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Количество</label>
+                                    <input
+                                        name="quantity"
+                                        type="number"
+                                        min="1"
+                                        defaultValue="1"
+                                        style={inputStyle}
+                                        onChange={handleChange}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label style={labelStyle}>Услуги</label>
+                                {serviceItems.map((item, index) => (
+                                    <div key={item.id} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', position: 'relative' }}>
+                                        <div style={{ position: 'relative', width: '100%' }}>
+                                            <input
+                                                placeholder="Чистка, Покраска, Ремонт..."
+                                                style={{ ...inputStyle, marginBottom: 0 }}
+                                                value={item.value}
+                                                onChange={(e) => handleServiceChange(index, e.target.value)}
+                                                onFocus={() => {
+                                                    const filtered = item.value
+                                                        ? serviceSuggestions.filter(s => s.toLowerCase().includes(item.value.toLowerCase()))
+                                                        : serviceSuggestions;
+                                                    setFilteredServiceSuggestions(filtered);
+                                                    setActiveServiceIndex(index);
+                                                }}
+                                                onBlur={() => setTimeout(() => setActiveServiceIndex(null), 200)}
+                                                autoComplete="off"
+                                            />
+                                            {activeServiceIndex === index && filteredServiceSuggestions.length > 0 && (
+                                                <ul style={{
+                                                    position: 'absolute',
+                                                    top: '100%',
+                                                    left: 0,
+                                                    width: '100%',
+                                                    background: '#ffffff',
+                                                    border: '1px solid var(--border-subtle)',
+                                                    borderRadius: '12px',
+                                                    maxHeight: '200px',
+                                                    overflowY: 'auto',
+                                                    listStyle: 'none',
+                                                    padding: '0.5rem 0',
+                                                    margin: 0,
+                                                    zIndex: 1001,
+                                                    boxShadow: 'var(--shadow-lg)'
+                                                }}>
+                                                    {filteredServiceSuggestions.map((suggestion, i) => (
+                                                        <li
+                                                            key={i}
+                                                            onClick={() => selectServiceSuggestion(suggestion)}
+                                                            style={{
+                                                                padding: '0.75rem 1rem',
+                                                                cursor: 'pointer',
+                                                                borderBottom: '1px solid var(--border-subtle)',
+                                                                color: 'var(--text-primary)',
+                                                                transition: 'background 0.2s'
+                                                            }}
+                                                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                                        >
+                                                            {suggestion}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+                                        {serviceItems.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeServiceField(index)}
+                                                className="btn"
+                                                style={{ padding: '0 1rem', background: '#fee2e2', color: '#ef4444', borderRadius: '10px' }}
+                                            >
+                                                ✕
+                                            </button>
+                                        )}
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={addServiceField}
+                                    className="btn btn-glass"
+                                    style={{ width: '100%', marginTop: '0.5rem', fontSize: '0.9rem', borderRadius: '10px' }}
+                                >
+                                    + Добавить услугу
+                                </button>
+                            </div>
+
+                            {/* Мастер */}
+                            <div style={{ position: 'relative' }}>
+                                <label style={labelStyle}>Мастер</label>
+                                <input
+                                    name="masterName"
+                                    placeholder="Выберите мастера"
+                                    style={inputStyle}
+                                    value={formData.masterName}
+                                    onChange={handleMasterChange}
+                                    onFocus={() => {
+                                        const filtered = formData.masterName
+                                            ? masters.filter(item => item.name.toLowerCase().includes(formData.masterName.toLowerCase()))
+                                            : masters;
+                                        setFilteredMasterSuggestions(filtered);
+                                        setShowMasterSuggestions(true);
+                                    }}
+                                    onBlur={() => setTimeout(() => setShowMasterSuggestions(false), 200)}
+                                    autoComplete="off"
+                                />
+                                {showMasterSuggestions && filteredMasterSuggestions.length > 0 && (
+                                    <ul style={{
+                                        position: 'absolute',
+                                        top: '100%',
+                                        left: 0,
+                                        width: '100%',
+                                        background: '#ffffff',
+                                        border: '1px solid var(--border-subtle)',
+                                        borderRadius: '12px',
+                                        maxHeight: '200px',
+                                        overflowY: 'auto',
+                                        listStyle: 'none',
+                                        padding: '0.5rem 0',
+                                        margin: 0,
+                                        zIndex: 1002,
+                                        boxShadow: 'var(--shadow-lg)'
+                                    }}>
+                                        {filteredMasterSuggestions.map((master) => (
+                                            <li
+                                                key={master.id}
+                                                onClick={() => selectMaster(master)}
+                                                style={{
+                                                    padding: '0.75rem 1rem',
+                                                    cursor: 'pointer',
+                                                    borderBottom: '1px solid var(--border-subtle)',
+                                                    color: 'var(--text-primary)',
+                                                    transition: 'background 0.2s'
+                                                }}
+                                                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                            >
+                                                <div style={{ fontWeight: '600' }}>{master.name}</div>
+                                            </li>
+                                        ))}
+                                    </ul>
                                 )}
                             </div>
-                        ))}
-                        <button
-                            type="button"
-                            onClick={addServiceField}
-                            className="btn btn-glass"
-                            style={{ width: '100%', marginTop: '0.5rem', fontSize: '0.9rem' }}
-                        >
-                            + Добавить услугу
-                        </button>
-                    </div>
 
-                    {/* Мастер */}
-                    <div style={{ marginBottom: '1rem', position: 'relative' }}>
-                        <label style={labelStyle}>Мастер</label>
-                        <input
-                            name="masterName"
-                            placeholder="Выберите мастера"
-                            style={inputStyle}
-                            value={formData.masterName}
-                            onChange={handleMasterChange}
-                            onFocus={() => {
-                                if (formData.masterName) {
-                                    const filtered = masters.filter(item =>
-                                        item.name.toLowerCase().includes(formData.masterName.toLowerCase())
-                                    );
-                                    setFilteredMasterSuggestions(filtered);
-                                } else {
-                                    setFilteredMasterSuggestions(masters);
-                                }
-                                setShowMasterSuggestions(true);
-                            }}
-                            onBlur={() => setTimeout(() => setShowMasterSuggestions(false), 200)}
-                            autoComplete="off"
-                        />
-                        {showMasterSuggestions && filteredMasterSuggestions.length > 0 && (
-                            <ul style={{
-                                position: 'absolute',
-                                top: '100%',
-                                left: 0,
-                                width: '100%',
-                                background: '#1a1a2e',
-                                border: '1px solid var(--border-subtle)',
-                                borderRadius: '8px',
-                                maxHeight: '200px',
-                                overflowY: 'auto',
-                                listStyle: 'none',
-                                padding: 0,
-                                margin: 0,
-                                zIndex: 1002,
-                                boxShadow: '0 4px 6px rgba(0,0,0,0.3)'
-                            }}>
-                                {filteredMasterSuggestions.map((master) => (
-                                    <li
-                                        key={master.id}
-                                        onClick={() => selectMaster(master)}
-                                        style={{
-                                            padding: '0.75rem',
-                                            cursor: 'pointer',
-                                            borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                            color: 'var(--text-primary)',
-                                            transition: 'background 0.2s'
-                                        }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                    >
-                                        <div style={{ fontWeight: 'bold' }}>{master.name}</div>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
-
-                    {/* Деньги */}
-                    <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '1rem', borderRadius: '12px', marginBottom: '1rem' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                             <div>
-                                <label style={labelStyle}>Итоговая Цена</label>
+                                <label style={labelStyle}>Комментарий</label>
                                 <input
-                                    name="price"
-                                    type="number"
-                                    placeholder="0"
-                                    required
-                                    style={{ ...inputStyle, marginBottom: 0, borderColor: 'var(--accent-primary)' }}
+                                    name="comment"
+                                    placeholder="Доп. информация..."
+                                    style={inputStyle}
+                                    value={formData.comment}
                                     onChange={handleChange}
                                 />
                             </div>
+                        </div>
+
+                        {/* Правая колонка: Оплата */}
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '1.5rem',
+                            background: 'var(--bg-primary)',
+                            padding: '1.5rem',
+                            borderRadius: '20px',
+                            border: '1px solid var(--border-subtle)',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}>
+                            <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem', marginBottom: '0.5rem' }}>
+                                <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-primary)', marginBottom: '1rem', fontWeight: '700' }}>💰 Оплата</h3>
+                            </div>
+
+                            <div>
+                                <label style={{ ...labelStyle, fontWeight: '600' }}>Итоговая Цена</label>
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        name="price"
+                                        type="number"
+                                        placeholder="0"
+                                        required
+                                        style={{
+                                            ...inputStyle,
+                                            fontSize: '1.5rem',
+                                            fontWeight: '800',
+                                            color: 'var(--accent-primary)',
+                                            paddingRight: '3.5rem',
+                                            borderColor: 'var(--accent-primary)',
+                                            boxShadow: '0 0 0 2px rgba(99, 102, 241, 0.1)'
+                                        }}
+                                        onChange={handleChange}
+                                        value={formData.price}
+                                    />
+                                    <span style={{
+                                        position: 'absolute',
+                                        right: '1.25rem',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        fontWeight: '700',
+                                        fontSize: '1.2rem',
+                                        color: 'var(--accent-primary)'
+                                    }}>грн</span>
+                                </div>
+                            </div>
+
                             <div>
                                 <label style={labelStyle}>Предоплата</label>
-                                <input
-                                    name="prepayment"
-                                    type="number"
-                                    placeholder="0"
-                                    style={{ ...inputStyle, marginBottom: 0 }}
-                                    onChange={handleChange}
-                                />
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        name="prepayment"
+                                        type="number"
+                                        placeholder="0"
+                                        style={{ ...inputStyle, fontSize: '1.2rem', fontWeight: '600', paddingRight: '3.5rem' }}
+                                        onChange={handleChange}
+                                        value={formData.prepayment}
+                                    />
+                                    <span style={{
+                                        position: 'absolute',
+                                        right: '1.25rem',
+                                        top: '50%',
+                                        transform: 'translateY(-50%)',
+                                        fontWeight: '600',
+                                        color: 'var(--text-muted)'
+                                    }}>грн</span>
+                                </div>
                             </div>
+
                             <div>
-                                <label style={labelStyle}>Способ</label>
-                                <select name="paymentMethod" style={{ ...inputStyle, marginBottom: 0 }} onChange={handleChange}>
-                                    <option value="Cash" style={{ color: 'black' }}>Наличные</option>
-                                    <option value="Terminal" style={{ color: 'black' }}>Карта / Терминал</option>
+                                <label style={labelStyle}>Способ оплаты</label>
+                                <select
+                                    name="paymentMethod"
+                                    style={{ ...inputStyle, appearance: 'none', background: 'white url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 1rem center' }}
+                                    onChange={handleChange}
+                                    value={formData.paymentMethod}
+                                >
+                                    <option value="Cash">💵 Наличные</option>
+                                    <option value="Terminal">💳 Карта / Терминал</option>
                                 </select>
+                            </div>
+
+                            <div style={{
+                                marginTop: '1rem',
+                                padding: '1.25rem',
+                                background: 'white',
+                                borderRadius: '12px',
+                                border: '1px dashed var(--border-subtle)',
+                                textAlign: 'center'
+                            }}>
+                                <div style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Останется оплатить:</div>
+                                <div style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+                                    {(Number(formData.price) - Number(formData.prepayment)) || 0} грн
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: 'auto' }}>
+                                <button
+                                    type="submit"
+                                    disabled={loading}
+                                    className="btn btn-primary"
+                                    style={{
+                                        width: '100%',
+                                        padding: '1.1rem',
+                                        fontSize: '1.1rem',
+                                        fontWeight: '700',
+                                        boxShadow: 'var(--accent-glow)'
+                                    }}
+                                >
+                                    {loading ? 'Сохранение...' : 'Создать Заказ'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="btn btn-glass"
+                                    style={{ width: '100%', padding: '0.75rem' }}
+                                >
+                                    Отмена
+                                </button>
                             </div>
                         </div>
                     </div>
-
-                    <div>
-                        <label style={labelStyle}>Комментарий</label>
-                        <input
-                            name="comment"
-                            placeholder="Доп. информация..."
-                            style={inputStyle}
-                            onChange={handleChange}
-                        />
-                    </div>
-
-                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
-                        <button
-                            type="button"
-                            onClick={onClose}
-                            className="btn btn-glass"
-                            style={{ flex: 1 }}
-                        >
-                            Отмена
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="btn btn-primary"
-                            style={{ flex: 2 }}
-                        >
-                            {loading ? 'Сохранение...' : 'Создать Заказ'}
-                        </button>
-                    </div>
-
                 </form>
                 <ClientCardModal
                     isOpen={isClientModalOpen}
