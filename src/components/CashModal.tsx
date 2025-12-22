@@ -180,8 +180,8 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
             left: 0,
             width: '100vw',
             height: '100vh',
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(5px)',
+            background: 'rgba(15, 23, 42, 0.3)',
+            backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -192,7 +192,7 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                 {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
                     <h2>💰 Касса</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'white', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
                 </div>
 
                 {/* Balance Cards */}
@@ -342,44 +342,46 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                                         onClick={() => setPaymentMethod('Cash')}
                                         style={{
                                             flex: 1,
-                                            padding: '1rem',
-                                            background: paymentMethod === 'Cash' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(255,255,255,0.05)',
-                                            border: paymentMethod === 'Cash' ? '2px solid #4ade80' : '1px solid var(--border-subtle)',
-                                            borderRadius: '12px',
-                                            color: paymentMethod === 'Cash' ? '#4ade80' : 'white',
+                                            padding: '1.25rem',
+                                            background: paymentMethod === 'Cash' ? '#f0fdf4' : 'white',
+                                            border: paymentMethod === 'Cash' ? '2px solid #22c55e' : '1px solid var(--border-subtle)',
+                                            borderRadius: '16px',
+                                            color: paymentMethod === 'Cash' ? '#16a34a' : 'var(--text-secondary)',
                                             cursor: 'pointer',
                                             transition: 'all 0.2s',
                                             fontSize: '1.5rem',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             alignItems: 'center',
-                                            gap: '0.5rem'
+                                            gap: '0.5rem',
+                                            boxShadow: paymentMethod === 'Cash' ? 'none' : 'var(--shadow-sm)'
                                         }}
                                     >
                                         <div>💵</div>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: '500' }}>Наличные</div>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>Наличные</div>
                                     </button>
                                     <button
                                         type="button"
                                         onClick={() => setPaymentMethod('Terminal')}
                                         style={{
                                             flex: 1,
-                                            padding: '1rem',
-                                            background: paymentMethod === 'Terminal' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255,255,255,0.05)',
+                                            padding: '1.25rem',
+                                            background: paymentMethod === 'Terminal' ? '#f5f3ff' : 'white',
                                             border: paymentMethod === 'Terminal' ? '2px solid #6366f1' : '1px solid var(--border-subtle)',
-                                            borderRadius: '12px',
-                                            color: paymentMethod === 'Terminal' ? '#a5b4fc' : 'white',
+                                            borderRadius: '16px',
+                                            color: paymentMethod === 'Terminal' ? '#4f46e5' : 'var(--text-secondary)',
                                             cursor: 'pointer',
                                             transition: 'all 0.2s',
                                             fontSize: '1.5rem',
                                             display: 'flex',
                                             flexDirection: 'column',
                                             alignItems: 'center',
-                                            gap: '0.5rem'
+                                            gap: '0.5rem',
+                                            boxShadow: paymentMethod === 'Terminal' ? 'none' : 'var(--shadow-sm)'
                                         }}
                                     >
                                         <div>💳</div>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: '500' }}>Терминал</div>
+                                        <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>Терминал</div>
                                     </button>
                                 </div>
                             </div>
@@ -398,11 +400,12 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                                     className="btn"
                                     style={{
                                         flex: 2,
-                                        background: txType === 'Income' ? '#4ade80' : '#f87171',
-                                        color: 'black',
+                                        background: txType === 'Income' ? 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)' : 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
+                                        color: 'white',
                                         fontWeight: 'bold',
                                         border: 'none',
-                                        fontSize: '1.1rem'
+                                        fontSize: '1.1rem',
+                                        boxShadow: txType === 'Income' ? '0 4px 15px rgba(34, 197, 94, 0.3)' : '0 4px 15px rgba(239, 68, 68, 0.3)'
                                     }}
                                 >
                                     ✓ Выполнить
@@ -420,28 +423,28 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
                         {/* Date Inputs */}
                         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                             <div style={{ flex: 1 }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'gray', marginBottom: '0.3rem' }}>От</label>
-                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ width: '100%', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white' }} />
+                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>От</label>
+                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', color: 'var(--text-primary)', outline: 'none', boxShadow: 'var(--shadow-sm)' }} />
                             </div>
                             <div style={{ flex: 1 }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'gray', marginBottom: '0.3rem' }}>До</label>
-                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ width: '100%', padding: '0.5rem', background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white' }} />
+                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>До</label>
+                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', color: 'var(--text-primary)', outline: 'none', boxShadow: 'var(--shadow-sm)' }} />
                             </div>
                         </div>
 
                         {/* Summary */}
-                        <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '12px', padding: '1rem', marginBottom: '1.5rem' }}>
+                        <div style={{ background: 'var(--bg-primary)', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem', border: '1px solid var(--border-subtle)' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                <span style={{ color: '#4ade80' }}>Приход:</span>
+                                <span style={{ color: '#16a34a', fontWeight: '600' }}>Приход:</span>
                                 <span style={{ fontWeight: 'bold' }}>+{filteredTransactions.filter(t => t.type === 'Income').reduce((acc, t) => acc + t.amount, 0).toLocaleString()} грн</span>
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                <span style={{ color: '#f87171' }}>Расход:</span>
+                                <span style={{ color: '#ef4444', fontWeight: '600' }}>Расход:</span>
                                 <span style={{ fontWeight: 'bold' }}>-{filteredTransactions.filter(t => t.type === 'Expense').reduce((acc, t) => acc + t.amount, 0).toLocaleString()} грн</span>
                             </div>
-                            <div style={{ borderTop: '1px solid var(--border-subtle)', paddingTop: '0.5rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between' }}>
-                                <span>Итого за период:</span>
-                                <span style={{ fontWeight: 'bold', color: 'white' }}>
+                            <div style={{ borderTop: '1px solid var(--border-highlight)', paddingTop: '0.75rem', marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between' }}>
+                                <span style={{ fontWeight: '600' }}>Итого за период:</span>
+                                <span style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '1.1rem' }}>
                                     {(filteredTransactions.filter(t => t.type === 'Income').reduce((acc, t) => acc + t.amount, 0) - filteredTransactions.filter(t => t.type === 'Expense').reduce((acc, t) => acc + t.amount, 0)).toLocaleString()} грн
                                 </span>
                             </div>

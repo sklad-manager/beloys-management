@@ -146,14 +146,15 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
         width: '100%',
         padding: '0.75rem',
         borderRadius: '8px',
-        background: 'rgba(255, 255, 255, 0.05)',
-        border: '1px solid var(--border-subtle)',
-        color: 'white',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        color: 'var(--text-primary)',
         marginBottom: '1rem',
         outline: 'none',
         fontSize: '1rem',
-        opacity: isEditing ? 1 : 0.8, // Slight visual cue, but keeps the "look"
-        cursor: isEditing ? 'text' : 'default'
+        opacity: isEditing ? 1 : 0.9,
+        cursor: isEditing ? 'text' : 'default',
+        boxShadow: 'var(--shadow-sm)'
     };
 
     const labelStyle = {

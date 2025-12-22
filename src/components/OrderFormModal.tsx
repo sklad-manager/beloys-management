@@ -329,12 +329,13 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
         width: '100%',
         padding: '0.75rem',
         borderRadius: '8px',
-        background: 'rgba(255, 255, 255, 0.05)',
-        border: '1px solid var(--border-subtle)',
-        color: 'white',
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        color: 'var(--text-primary)',
         marginBottom: '1rem',
         outline: 'none',
-        fontSize: '1rem'
+        fontSize: '1rem',
+        boxShadow: 'var(--shadow-sm)'
     };
 
     const labelStyle = {
@@ -351,8 +352,8 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
             left: 0,
             width: '100vw',
             height: '100vh',
-            background: 'rgba(0,0,0,0.6)',
-            backdropFilter: 'blur(5px)',
+            background: 'rgba(15, 23, 42, 0.3)',
+            backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',

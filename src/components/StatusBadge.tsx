@@ -91,22 +91,22 @@ export default function StatusBadge({
     const getStyle = (s: string) => {
         if (s === 'Готово') {
             return {
-                background: 'rgba(249, 115, 22, 0.2)',
-                color: '#fb923c',
-                border: '1px solid rgba(249, 115, 22, 0.3)'
+                background: '#ffedd5', // Orange 100
+                color: '#ea580c', // Orange 600
+                border: '1px solid #fed7aa' // Orange 200
             };
         }
         if (s === 'Выдан') {
             return {
-                background: 'rgba(34, 197, 94, 0.2)',
-                color: '#4ade80',
-                border: '1px solid rgba(34, 197, 94, 0.3)'
+                background: '#f0fdf4', // Green 50
+                color: '#16a34a', // Green 600
+                border: '1px solid #dcfce7' // Green 100
             };
         }
         return {
-            background: 'rgba(99, 102, 241, 0.2)',
-            color: '#a5b4fc',
-            border: '1px solid rgba(99, 102, 241, 0.3)'
+            background: '#eef2ff', // Indigo 50
+            color: '#4f46e5', // Indigo 600
+            border: '1px solid #e0e7ff' // Indigo 100
         };
     };
 
@@ -141,32 +141,35 @@ export default function StatusBadge({
                     top: '110%',
                     left: 0,
                     zIndex: 50,
-                    background: '#1a1a1a',
-                    border: '1px solid rgba(255,255,255,0.1)',
-                    borderRadius: '8px',
+                    background: '#ffffff',
+                    border: '1px solid var(--border-highlight)',
+                    borderRadius: '12px',
                     overflow: 'hidden',
-                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.5)',
-                    minWidth: 'max-content'
+                    boxShadow: 'var(--shadow-lg)',
+                    minWidth: 'max-content',
+                    animation: 'fadeIn 0.2s ease-out'
                 }}>
                     {STATUS_OPTIONS.map((option) => (
                         <div
                             key={option}
                             onClick={() => handleStatusChange(option)}
                             style={{
-                                padding: '0.5rem 1rem',
+                                padding: '0.75rem 1.25rem',
                                 cursor: 'pointer',
                                 fontSize: '0.85rem',
-                                color: option === currentStatus ? getStyle(option).color : '#e5e5e5',
-                                background: option === currentStatus ? 'rgba(255,255,255,0.05)' : 'transparent',
+                                color: option === currentStatus ? getStyle(option).color : 'var(--text-secondary)',
+                                background: option === currentStatus ? 'var(--bg-primary)' : 'transparent',
                                 display: 'flex',
                                 alignItems: 'center',
-                                whiteSpace: 'nowrap'
+                                whiteSpace: 'nowrap',
+                                fontWeight: option === currentStatus ? '600' : '500',
+                                transition: 'all 0.2s'
                             }}
                             onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                                e.currentTarget.style.background = 'var(--bg-primary)';
                             }}
                             onMouseLeave={(e) => {
-                                e.currentTarget.style.background = option === currentStatus ? 'rgba(255,255,255,0.05)' : 'transparent';
+                                e.currentTarget.style.background = option === currentStatus ? 'var(--bg-primary)' : 'transparent';
                             }}
                         >
                             {option}

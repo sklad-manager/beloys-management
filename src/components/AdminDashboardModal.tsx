@@ -150,55 +150,59 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
         left: 0,
         right: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        backgroundColor: 'rgba(15, 23, 42, 0.3)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         zIndex: 2000,
-        backdropFilter: 'blur(5px)'
+        backdropFilter: 'blur(8px)'
     };
 
     const modalStyle: React.CSSProperties = {
-        backgroundColor: '#16213e',
+        backgroundColor: 'var(--bg-secondary)',
         padding: '2rem',
-        borderRadius: '16px',
-        width: '90%',
-        maxWidth: '900px',
-        height: '80vh',
+        borderRadius: '24px',
+        width: '95%',
+        maxWidth: '1000px',
+        height: '90vh',
         display: 'flex',
         flexDirection: 'column',
-        border: '1px solid rgba(255,255,255,0.1)'
+        border: '1px solid var(--border-highlight)',
+        boxShadow: 'var(--shadow-lg)'
     };
 
     const inputStyle: React.CSSProperties = {
         padding: '0.75rem',
-        borderRadius: '8px',
-        border: '1px solid rgba(255,255,255,0.1)',
-        backgroundColor: '#1a1a2e',
-        color: '#fff',
+        borderRadius: '12px',
+        border: '1px solid #e2e8f0',
+        backgroundColor: '#ffffff',
+        color: 'var(--text-primary)',
         marginRight: '0.5rem',
-        outline: 'none'
+        outline: 'none',
+        boxShadow: 'var(--shadow-sm)'
     };
 
     const tabStyle = (isActive: boolean): React.CSSProperties => ({
-        padding: '0.5rem 1rem',
-        background: 'none',
+        padding: '0.75rem 1.25rem',
+        background: isActive ? 'var(--bg-primary)' : 'none',
         border: 'none',
-        color: isActive ? '#4cc9f0' : '#8d99ae',
-        borderBottom: isActive ? '2px solid #4cc9f0' : 'none',
+        color: isActive ? 'var(--accent-primary)' : 'var(--text-secondary)',
+        borderRadius: '10px 10px 0 0',
         cursor: 'pointer',
-        fontSize: '1.1rem'
+        fontSize: '1rem',
+        fontWeight: isActive ? '600' : '500',
+        transition: 'all 0.2s'
     });
 
     return (
         <div style={overlayStyle} onClick={onClose}>
             <div style={modalStyle} onClick={e => e.stopPropagation()}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h2 style={{ margin: 0, color: '#fff' }}>Панель Администратора</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+                    <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>Панель Администратора</h2>
+                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
                 </div>
 
-                <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>
                     <button style={tabStyle(activeTab === 'masters')} onClick={() => setActiveTab('masters')}>
                         Мастера
                     </button>
@@ -216,7 +220,7 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                 <div style={{ flex: 1, overflowY: 'auto' }}>
                     {activeTab === 'masters' && (
                         <div>
-                            <form onSubmit={handleAddMaster} style={{ display: 'flex', marginBottom: '1.5rem', background: 'rgba(255,255,255,0.05)', padding: '1rem', borderRadius: '8px' }}>
+                            <form onSubmit={handleAddMaster} style={{ display: 'flex', marginBottom: '1.5rem', background: 'var(--bg-primary)', padding: '1rem', borderRadius: '16px', border: '1px solid var(--border-subtle)' }}>
                                 <input
                                     placeholder="Имя мастера"
                                     value={newMasterName}
@@ -236,22 +240,23 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                             </form>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                {loading ? <p style={{ color: '#8d99ae' }}>Загрузка...</p> : masters.map(master => (
+                                {loading ? <p style={{ color: 'var(--text-muted)' }}>Загрузка...</p> : masters.map(master => (
                                     <div key={master.id} style={{
                                         display: 'flex',
                                         justifyContent: 'space-between',
                                         alignItems: 'center',
-                                        padding: '1rem',
-                                        background: 'rgba(255,255,255,0.02)',
-                                        borderRadius: '8px',
-                                        border: '1px solid rgba(255,255,255,0.05)'
+                                        padding: '1.25rem',
+                                        background: 'white',
+                                        borderRadius: '16px',
+                                        border: '1px solid var(--border-subtle)',
+                                        boxShadow: 'var(--shadow-sm)'
                                     }}>
-                                        <div style={{ fontWeight: 'bold' }}>{master.name}</div>
+                                        <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{master.name}</div>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '2rem' }}>
-                                            <div style={{ color: '#4cc9f0' }}>{master.percentage}%</div>
+                                            <div style={{ color: 'var(--accent-primary)', fontWeight: '700' }}>{master.percentage}%</div>
                                             <button
                                                 onClick={() => handleDeleteMaster(master.id)}
-                                                style={{ background: 'none', border: 'none', color: '#ff6b6b', cursor: 'pointer', fontSize: '1.2rem' }}
+                                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1.2rem' }}
                                                 title="Удалить"
                                             >
                                                 🗑️
@@ -268,9 +273,9 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
 
                     {activeTab === 'salaries' && (
                         <div>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e5e5e5' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--text-secondary)' }}>
                                 <thead>
-                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
+                                    <tr style={{ borderBottom: '1px solid var(--border-subtle)', textAlign: 'left', background: 'var(--bg-primary)' }}>
                                         <th style={{ padding: '1rem' }}>Дата</th>
                                         <th style={{ padding: '1rem' }}>Мастер</th>
                                         <th style={{ padding: '1rem' }}>Заказ</th>
@@ -280,13 +285,13 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                 </thead>
                                 <tbody>
                                     {salaryLogs.map((log) => (
-                                        <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <tr key={log.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                                             <td style={{ padding: '1rem' }}>
                                                 {new Date(log.date).toLocaleDateString()}
                                             </td>
                                             <td style={{ padding: '1rem' }}>{log.master?.name || '-'}</td>
                                             <td style={{ padding: '1rem', fontFamily: 'monospace' }}>#{log.orderNumber}</td>
-                                            <td style={{ padding: '1rem', color: '#4ade80' }}>
+                                            <td style={{ padding: '1rem', color: '#16a34a', fontWeight: '600' }}>
                                                 {log.amount.toFixed(2)} грн
                                             </td>
                                             <td style={{ padding: '1rem' }}>
@@ -311,9 +316,9 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
 
                     {activeTab === 'edits' && (
                         <div>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e5e5e5' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--text-secondary)' }}>
                                 <thead>
-                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
+                                    <tr style={{ borderBottom: '1px solid var(--border-subtle)', textAlign: 'left', background: 'var(--bg-primary)' }}>
                                         <th style={{ padding: '1rem' }}>Дата / Время</th>
                                         <th style={{ padding: '1rem' }}>Заказ</th>
                                         <th style={{ padding: '1rem' }}>Изменения</th>
@@ -322,7 +327,7 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                 </thead>
                                 <tbody>
                                     {editLogs.map((log) => (
-                                        <tr key={log.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <tr key={log.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                                             <td style={{ padding: '1rem' }}>
                                                 {new Date(log.date).toLocaleString()}
                                             </td>
@@ -349,9 +354,9 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
 
                     {activeTab === 'archive' && (
                         <div>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', color: '#e5e5e5' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--text-secondary)' }}>
                                 <thead>
-                                    <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.1)', textAlign: 'left' }}>
+                                    <tr style={{ borderBottom: '1px solid var(--border-subtle)', textAlign: 'left', background: 'var(--bg-primary)' }}>
                                         <th style={{ padding: '1rem' }}>Дата</th>
                                         <th style={{ padding: '1rem' }}>№</th>
                                         <th style={{ padding: '1rem' }}>Клиент</th>
@@ -364,7 +369,7 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                     {loading ? (
                                         <tr><td colSpan={6} style={{ padding: '2rem', textAlign: 'center' }}>Загрузка...</td></tr>
                                     ) : archivedOrders.map((order) => (
-                                        <tr key={order.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                                        <tr key={order.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                                             <td style={{ padding: '1rem' }}>
                                                 {new Date(order.createdAt).toLocaleDateString()}
                                             </td>

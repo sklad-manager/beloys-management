@@ -100,7 +100,7 @@ export default function ThreeDotsMenu({ onLogout }: ThreeDotsMenuProps) {
                         display: 'flex',
                         flexDirection: 'column',
                         gap: '0.25rem',
-                        boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)'
+                        boxShadow: 'var(--shadow-lg)'
                     }}
                 >
                     {deferredPrompt && (
@@ -142,7 +142,7 @@ export default function ThreeDotsMenu({ onLogout }: ThreeDotsMenuProps) {
                             padding: '0.75rem 1rem',
                             border: 'none',
                             background: 'transparent',
-                            color: '#f87171',
+                            color: '#ef4444',
                             cursor: 'pointer',
                             textAlign: 'left',
                             borderRadius: '8px',
@@ -156,11 +156,11 @@ export default function ThreeDotsMenu({ onLogout }: ThreeDotsMenuProps) {
                 </div>
             )}
 
-            <style jsx>{`
-        .menu-item:hover {
-          background: rgba(255, 255, 255, 0.1) !important;
-        }
-      `}</style>
+            <style>{`
+                .menu-item:hover {
+                    background: rgba(0, 0, 0, 0.05) !important;
+                }
+            `}</style>
         </div>
     );
 }

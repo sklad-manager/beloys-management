@@ -187,12 +187,13 @@ export default function Home() {
             disabled={!selectedOrderId}
             className="btn"
             style={{
-              background: selectedOrderId ? 'var(--accent-primary)' : 'rgba(255, 255, 255, 0.05)',
-              opacity: selectedOrderId ? 1 : 0.5,
+              background: selectedOrderId ? 'var(--accent-primary)' : 'white',
+              opacity: selectedOrderId ? 1 : 0.8,
               cursor: selectedOrderId ? 'pointer' : 'not-allowed',
               border: '1px solid var(--border-subtle)',
-              color: 'white',
-              transition: 'all 0.2s ease'
+              color: selectedOrderId ? 'white' : 'var(--text-primary)',
+              transition: 'all 0.2s ease',
+              boxShadow: selectedOrderId ? 'var(--accent-glow)' : 'var(--shadow-sm)'
             }}
           >
             👁️ Просмотр
@@ -227,7 +228,7 @@ export default function Home() {
           <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
-                <thead style={{ background: 'rgba(255,255,255,0.05)' }}>
+                <thead style={{ background: 'var(--bg-primary)' }}>
                   <tr>
                     <th style={{ padding: '1rem', textAlign: 'left' }}>№</th>
                     <th style={{ padding: '1rem', textAlign: 'left' }}>Клиент</th>
@@ -250,10 +251,10 @@ export default function Home() {
                         style={{
                           borderTop: '1px solid var(--border-subtle)',
                           cursor: 'pointer',
-                          background: selectedOrderId === order.id ? 'rgba(99, 102, 241, 0.15)' : 'transparent',
-                          borderLeft: selectedOrderId === order.id ? '2px solid var(--accent-primary)' : '2px solid transparent'
+                          background: selectedOrderId === order.id ? 'rgba(99, 102, 241, 0.05)' : 'transparent',
+                          borderLeft: selectedOrderId === order.id ? '4px solid var(--accent-primary)' : '4px solid transparent'
                         }}
-                        className="hover:bg-white/5 transition-colors"
+                        className="hover:bg-black/5 transition-colors"
                         onClick={() => setSelectedOrderId(order.id === selectedOrderId ? null : order.id)}
                       >
                         <td style={{ padding: '1rem', fontFamily: 'monospace' }}>#{order.orderNumber}</td>
@@ -327,6 +328,6 @@ export default function Home() {
         prepayment={paymentModalData.prepayment}
         orderNumber={paymentModalData.orderNumber}
       />
-    </main>
+    </main >
   );
 }

@@ -69,12 +69,13 @@ export default function LoginPage({ onSuccess }: LoginPageProps) {
                                 width: '100%',
                                 padding: '1rem',
                                 fontSize: '1rem',
-                                background: 'rgba(255, 255, 255, 0.05)',
-                                border: error ? '1px solid #f87171' : '1px solid var(--border-subtle)',
+                                background: '#ffffff',
+                                border: error ? '1px solid #f87171' : '1px solid #e2e8f0',
                                 borderRadius: '12px',
-                                color: 'white',
+                                color: 'var(--text-primary)',
                                 outline: 'none',
-                                transition: 'border-color 0.2s'
+                                transition: 'all 0.2s',
+                                boxShadow: 'var(--shadow-sm)'
                             }}
                         />
                     </div>
