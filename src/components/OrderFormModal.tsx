@@ -359,23 +359,64 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
             justifyContent: 'center',
             zIndex: 1000
         }}>
-            <div className="glass-card" style={{
-                width: '100%',
-                maxWidth: '1000px',
-                maxHeight: '90vh',
+            <div className="glass-card full-screen-modal" style={{
+                width: '100vw',
+                height: '100vh',
+                maxWidth: 'none',
+                maxHeight: 'none',
                 overflowY: 'auto',
-                margin: '1rem',
-                padding: '2rem'
+                margin: 0,
+                padding: '2rem 5% 4rem 5%',
+                borderRadius: 0,
+                background: 'var(--bg-secondary)',
+                border: 'none',
+                position: 'relative',
+                zIndex: 1001
             }}>
-                <h2 style={{ marginBottom: '2rem', textAlign: 'center', fontSize: '1.8rem', color: 'var(--text-primary)' }}>Новый Заказ</h2>
+                <style>{`
+                    .order-grid {
+                        display: grid;
+                        grid-template-columns: 2fr 0.9fr;
+                        gap: 5rem;
+                        align-items: start;
+                        max-width: 1400px;
+                        margin: 0 auto;
+                    }
+                    @media (max-width: 1100px) {
+                        .order-grid {
+                            grid-template-columns: 1fr;
+                            gap: 2.5rem;
+                            max-width: 700px;
+                        }
+                    }
+                `}</style>
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: '3rem',
+                    maxWidth: '1400px',
+                    margin: '0 auto 3rem auto'
+                }}>
+                    <h2 style={{ fontSize: '2.2rem', color: 'var(--text-primary)', fontWeight: '800', margin: 0 }}>Новый Заказ</h2>
+                    <button
+                        onClick={onClose}
+                        className="btn btn-glass"
+                        style={{
+                            width: '45px',
+                            height: '45px',
+                            borderRadius: '50%',
+                            padding: 0,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.2rem'
+                        }}
+                    >✕</button>
+                </div>
 
                 <form onSubmit={handleSubmit}>
-                    <div style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                        gap: '2.5rem',
-                        alignItems: 'start'
-                    }}>
+                    <div className="order-grid">
                         {/* Левая колонка: Информация о заказе */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                             <div style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem', marginBottom: '0.5rem' }}>
