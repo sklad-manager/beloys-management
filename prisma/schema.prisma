@@ -52,6 +52,7 @@ model Order {
   color           String
   quantity        Int      @default(1)
   services        String   // Comma separated or JSON
+  serviceDetails  String?  // JSON for detailed master/price breakdown
   comment         String?
   
   // Financials

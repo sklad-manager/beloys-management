@@ -7,9 +7,10 @@ interface OrderFormModalProps {
     isOpen: boolean;
     onClose: () => void;
     onSubmit: (data: any) => void;
+    orderId?: number | null;
 }
 
-export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormModalProps) {
+export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: OrderFormModalProps) {
     const [formData, setFormData] = useState({
         clientName: '',
         phone: '',
@@ -58,42 +59,104 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
     const [foundClient, setFoundClient] = useState<{ id: number, name: string } | null>(null);
 
     const [loading, setLoading] = useState(false);
+    const [orderNumber, setOrderNumber] = useState<string | null>(null);
+
+    const fetchOrderDetails = async (id: number) => {
+        setLoading(true);
+        try {
+            const res = await fetch(`/api/orders/${id}`);
+            if (res.ok) {
+                const data = await res.json();
+                setOrderNumber(data.orderNumber);
+                setFormData({
+                    clientName: data.clientName,
+                    phone: data.phone,
+                    clientId: data.clientId,
+                    shoeType: data.shoeType,
+                    brand: data.brand,
+                    color: data.color,
+                    services: data.services,
+                    price: data.price.toString(),
+                    prepayment: (data.prepaymentCash + data.prepaymentTerminal).toString(),
+                    paymentMethod: data.prepaymentTerminal > 0 ? 'Terminal' : 'Cash',
+                    comment: data.comment || '',
+                    quantity: data.quantity || 1
+                });
+
+                if (data.serviceDetails) {
+                    try {
+                        const details = JSON.parse(data.serviceDetails);
+                        if (Array.isArray(details)) {
+                            setServiceItems(details.map((s: any, idx: number) => {
+                                // Explicitly resolve master name if missing but ID is present
+                                let mName = s.masterName || '';
+                                if (!mName && s.masterId && masters.length > 0) {
+                                    const match = masters.find(m => m.id === s.masterId);
+                                    if (match) mName = match.name;
+                                }
+                                return {
+                                    id: Date.now() + idx,
+                                    value: s.service,
+                                    masterId: s.masterId,
+                                    masterName: mName,
+                                    price: s.price
+                                };
+                            }));
+                        }
+                    } catch (e) { console.error(e); }
+                } else {
+                    // Fallback for older orders
+                    let mName = '';
+                    if (data.masterId && masters.length > 0) {
+                        const match = masters.find(m => m.id === data.masterId);
+                        if (match) mName = match.name;
+                    }
+                    setServiceItems([{ id: Date.now(), value: data.services, masterId: data.masterId, masterName: mName, price: data.price.toString() }]);
+                }
+                setFoundClient(data.clientId ? { id: data.clientId, name: data.clientName } : null);
+            }
+        } catch (e) {
+            console.error('Failed to fetch order details', e);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         if (isOpen) {
-            setFormData({
-                clientName: '',
-                phone: '',
-                clientId: null,
-                shoeType: '',
-                brand: '',
-                color: '',
-                services: '',
-                price: '',
-                prepayment: '',
-                paymentMethod: 'Cash',
-                comment: '',
-                quantity: 1
-            });
-            setServiceItems([{ id: Date.now(), value: '', masterId: null, masterName: '', price: '' }]);
-            setFoundClient(null);
-            setClientSuggestions([]);
-            setShowClientSuggestions(false);
-
-            setFilteredMasterSuggestions([]);
-            setShowMasterSuggestions(false);
-
-            setFilteredSuggestions([]);
-            setShowSuggestions(false);
-            setShowSuggestions(false);
-
-            setFilteredColorSuggestions([]);
-            setShowColorSuggestions(false);
-
-            setFilteredBrandSuggestions([]);
-            setShowBrandSuggestions(false);
+            if (orderId) {
+                fetchOrderDetails(orderId);
+            } else {
+                setOrderNumber(null);
+                setFormData({
+                    clientName: '',
+                    phone: '',
+                    clientId: null,
+                    shoeType: '',
+                    brand: '',
+                    color: '',
+                    services: '',
+                    price: '',
+                    prepayment: '',
+                    paymentMethod: 'Cash',
+                    comment: '',
+                    quantity: 1
+                });
+                setServiceItems([{ id: Date.now(), value: '', masterId: null, masterName: '', price: '' }]);
+                setFoundClient(null);
+                setClientSuggestions([]);
+                setShowClientSuggestions(false);
+                setFilteredMasterSuggestions([]);
+                setShowMasterSuggestions(false);
+                setFilteredSuggestions([]);
+                setShowSuggestions(false);
+                setFilteredColorSuggestions([]);
+                setShowColorSuggestions(false);
+                setFilteredBrandSuggestions([]);
+                setShowBrandSuggestions(false);
+            }
         }
-    }, [isOpen]);
+    }, [isOpen, orderId, masters]); // Add masters to ensure we can resolve names when editing
 
     useEffect(() => {
         const fetchReferences = async () => {
@@ -139,6 +202,14 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
         };
         fetchReferences();
     }, []);
+
+    // Auto-sum prices from services
+    useEffect(() => {
+        const total = serviceItems.reduce((acc, item) => acc + (parseFloat(item.price) || 0), 0);
+        if (total > 0) {
+            setFormData(prev => ({ ...prev, price: total.toString() }));
+        }
+    }, [serviceItems]);
 
     const handleShoeTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -319,10 +390,18 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
         const processedServices = serviceItems
             .filter(item => item.value.trim().length > 0)
             .map(item => {
-                if (item.masterName.trim().length > 0) {
-                    currentMasterId = item.masterId;
+                // If ID is missing but name is present, try to find ID from masters list
+                let effectiveMasterId = item.masterId;
+                if (!effectiveMasterId && item.masterName) {
+                    const match = masters.find(m => m.name.toLowerCase() === item.masterName.toLowerCase());
+                    if (match) effectiveMasterId = match.id;
+                }
+
+                if (item.masterName && item.masterName.trim().length > 0) {
+                    currentMasterId = effectiveMasterId;
                     currentMasterName = item.masterName;
                 }
+
                 return {
                     service: item.value.trim(),
                     masterId: currentMasterId,
@@ -331,21 +410,40 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
                 };
             });
 
-        // For backward compatibility and single master display, 
-        // we use the master of the first service as the main masterId
-        const firstServiceMasterId = processedServices.length > 0 ? processedServices[0].masterId : null;
-
         const servicesString = processedServices
-            .map(s => `${s.service} (${s.masterName}${s.price !== '0' ? `: ${s.price}` : ''})`)
+            .map(s => `${s.service} [${s.masterName || 'Не назначен'}: ${s.price} грн]`)
             .join(', ');
 
-        await onSubmit({
+        const finalData = {
             ...formData,
             services: servicesString,
-            masterId: firstServiceMasterId,
-            // We can also pass the full structured data if the API is updated later
+            masterId: processedServices.length > 0 ? processedServices[0].masterId : null,
             serviceDetails: processedServices
-        });
+        };
+
+        if (orderId) {
+            // Edit existing order
+            try {
+                const res = await fetch(`/api/orders/${orderId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(finalData)
+                });
+                if (res.ok) {
+                    onSubmit(await res.json());
+                } else {
+                    const err = await res.json();
+                    alert(`Ошибка: ${err.error || 'Не удалось сохранить'}`);
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Ошибка сети');
+            }
+        } else {
+            // Create new order
+            await onSubmit(finalData);
+        }
+
         setLoading(false);
         onClose();
     };
@@ -381,26 +479,22 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
             left: 0,
             width: '100vw',
             height: '100vh',
-            background: 'rgba(15, 23, 42, 0.3)',
-            backdropFilter: 'blur(8px)',
+            background: 'var(--bg-primary)', // Solid primary background
+            color: 'var(--text-primary)',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
+            flexDirection: 'column',
+            zIndex: 1000,
+            overflowX: 'hidden'
         }}>
-            <div className="glass-card full-screen-modal" style={{
-                width: '100vw',
-                height: '100vh',
-                maxWidth: 'none',
-                maxHeight: 'none',
+            <div className="full-screen-container" style={{
+                width: '100%',
+                height: '100%',
+                maxWidth: '100%',
                 overflowY: 'auto',
-                margin: 0,
-                padding: '2rem 5% 4rem 5%',
-                borderRadius: 0,
-                background: 'var(--bg-secondary)',
-                border: 'none',
+                padding: '2rem 5% 5rem 5%',
                 position: 'relative',
-                zIndex: 1001
+                display: 'flex',
+                flexDirection: 'column'
             }}>
                 <style>{`
                     .order-grid {
@@ -453,7 +547,9 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
                     maxWidth: '1400px',
                     margin: '0 auto 3rem auto'
                 }}>
-                    <h2 style={{ fontSize: '2.2rem', color: 'var(--text-primary)', fontWeight: '800', margin: 0 }}>Новый Заказ</h2>
+                    <h2 style={{ fontSize: '2.2rem', color: 'var(--text-primary)', fontWeight: '800', margin: 0 }}>
+                        {orderId ? `Заказ #${orderNumber}` : 'Новый Заказ'}
+                    </h2>
                     <button
                         onClick={onClose}
                         className="btn btn-glass"
@@ -791,21 +887,40 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
 
                                         {/* Мастер */}
                                         <div style={{ position: 'relative' }}>
-                                            <input
-                                                placeholder="Мастер..."
-                                                style={{ ...inputStyle, marginBottom: 0, fontSize: '0.9rem' }}
-                                                value={item.masterName}
-                                                onChange={(e) => handleServiceMasterChange(index, e.target.value)}
-                                                onFocus={() => {
-                                                    const filtered = item.masterName
-                                                        ? masters.filter(m => m.name.toLowerCase().includes(item.masterName.toLowerCase()))
-                                                        : masters;
-                                                    setFilteredMasterSuggestions(filtered);
-                                                    setActiveMasterIndex(index);
-                                                }}
-                                                onBlur={() => setTimeout(() => setActiveMasterIndex(null), 200)}
-                                                autoComplete="off"
-                                            />
+                                            {(() => {
+                                                // Find inherited master name for placeholder
+                                                let inheritedMasterName = '';
+                                                for (let i = index; i >= 0; i--) {
+                                                    if (serviceItems[i].masterName) {
+                                                        inheritedMasterName = serviceItems[i].masterName;
+                                                        break;
+                                                    }
+                                                }
+
+                                                return (
+                                                    <input
+                                                        placeholder={inheritedMasterName || "Мастер..."}
+                                                        style={{
+                                                            ...inputStyle,
+                                                            marginBottom: 0,
+                                                            fontSize: '0.9rem',
+                                                            fontStyle: !item.masterName && inheritedMasterName ? 'italic' : 'normal',
+                                                            opacity: !item.masterName && inheritedMasterName ? 0.7 : 1
+                                                        }}
+                                                        value={item.masterName}
+                                                        onChange={(e) => handleServiceMasterChange(index, e.target.value)}
+                                                        onFocus={() => {
+                                                            const filtered = item.masterName
+                                                                ? masters.filter(m => m.name.toLowerCase().includes(item.masterName.toLowerCase()))
+                                                                : masters;
+                                                            setFilteredMasterSuggestions(filtered);
+                                                            setActiveMasterIndex(index);
+                                                        }}
+                                                        onBlur={() => setTimeout(() => setActiveMasterIndex(null), 200)}
+                                                        autoComplete="off"
+                                                    />
+                                                );
+                                            })()}
                                             {activeMasterIndex === index && filteredMasterSuggestions.length > 0 && (
                                                 <ul className="suggestions-dropdown">
                                                     {filteredMasterSuggestions.map((m) => (
@@ -979,7 +1094,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
                                         boxShadow: 'var(--accent-glow)'
                                     }}
                                 >
-                                    {loading ? 'Сохранение...' : 'Создать Заказ'}
+                                    {loading ? 'Обработка...' : (orderId ? 'Сохранить Изменения' : 'Создать Заказ')}
                                 </button>
                                 <button
                                     type="button"

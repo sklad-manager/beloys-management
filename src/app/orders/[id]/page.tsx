@@ -18,6 +18,7 @@ interface Order {
     createdAt: string;
     completedAt?: string;
     services: string;
+    serviceDetails?: string;
     comment?: string;
     prepaymentCash: number;
     prepaymentTerminal: number;
@@ -42,6 +43,14 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
     const [formData, setFormData] = useState<any>({});
     const [masters, setMasters] = useState<{ id: number, name: string }[]>([]);
 
+    // Services state
+    const [serviceItems, setServiceItems] = useState<{ id: number, value: string, masterId: number | null, masterName: string, price: string }[]>([]);
+    const [serviceSuggestions, setServiceSuggestions] = useState<string[]>([]);
+    const [filteredServiceSuggestions, setFilteredServiceSuggestions] = useState<string[]>([]);
+    const [activeServiceIndex, setActiveServiceIndex] = useState<number | null>(null);
+    const [activeMasterIndex, setActiveMasterIndex] = useState<number | null>(null);
+    const [filteredMasterSuggestions, setFilteredMasterSuggestions] = useState<{ id: number, name: string }[]>([]);
+
     const fetchOrder = async () => {
         try {
             const res = await fetch(`/api/orders/${id}`);
@@ -61,6 +70,34 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                     status: data.status,
                     quantity: data.quantity || 1
                 });
+
+                // Parse serviceDetails
+                if (data.serviceDetails) {
+                    try {
+                        const details = JSON.parse(data.serviceDetails);
+                        if (Array.isArray(details)) {
+                            setServiceItems(details.map((s: any, idx: number) => ({
+                                id: Date.now() + idx,
+                                value: s.service,
+                                masterId: s.masterId,
+                                masterName: s.masterName,
+                                price: s.price
+                            })));
+                        } else {
+                            setServiceItems([]);
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse serviceDetails', e);
+                    }
+                } else if (data.services) {
+                    setServiceItems([{
+                        id: Date.now(),
+                        value: data.services,
+                        masterId: data.masterId,
+                        masterName: '', // Will be resolved if needed
+                        price: data.price.toString()
+                    }]);
+                }
             }
         } catch (e) {
             console.error(e);
@@ -80,19 +117,71 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
         }
     }
 
+    const fetchServiceSuggestions = async () => {
+        try {
+            const res = await fetch('/api/references?type=SERVICE');
+            if (res.ok) {
+                const data = await res.json();
+                setServiceSuggestions(data.map((item: any) => item.value));
+            }
+        } catch (e) {
+            console.error('Failed to fetch service suggestions', e);
+        }
+    };
+
     useEffect(() => {
         fetchOrder();
         fetchMasters();
+        fetchServiceSuggestions();
     }, [id]);
 
+    useEffect(() => {
+        if (isEditing && serviceItems.length > 0) {
+            const total = serviceItems.reduce((acc, item) => acc + (parseFloat(item.price) || 0), 0);
+            if (total > 0) {
+                setFormData((prev: any) => ({ ...prev, price: total.toString() }));
+            }
+        }
+    }, [serviceItems, isEditing]);
+
     const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         setSaving(true);
+
+        let currentMasterId: number | null = null;
+        let currentMasterName: string = '';
+
+        const processedServices = serviceItems
+            .filter(item => item.value.trim().length > 0)
+            .map(item => {
+                if (item.masterName && item.masterName.trim().length > 0) {
+                    currentMasterId = item.masterId;
+                    currentMasterName = item.masterName;
+                }
+                return {
+                    service: item.value.trim(),
+                    masterId: currentMasterId,
+                    masterName: currentMasterName,
+                    price: item.price || '0'
+                };
+            });
+
+        const servicesString = processedServices
+            .map(s => `${s.service} [${s.masterName || 'Не назначен'}: ${s.price} грн]`)
+            .join(', ');
+
+        const submissionData = {
+            ...formData,
+            services: servicesString,
+            serviceDetails: processedServices,
+            masterId: processedServices.length > 0 ? processedServices[0].masterId : formData.masterId
+        };
+
         try {
             const res = await fetch(`/api/orders/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(submissionData)
             });
 
             if (res.ok) {
@@ -101,13 +190,60 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
             } else {
                 const err = await res.json();
                 alert(`Ошибка сохранения: ${err.error || 'Неизвестная ошибка'}`);
-                console.error('Save failed:', err);
             }
         } catch (e) {
             console.error('Failed to save', e);
             alert('Ошибка сети при сохранении');
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleServiceChange = (index: number, val: string) => {
+        const newItems = [...serviceItems];
+        newItems[index].value = val;
+        setServiceItems(newItems);
+
+        if (val.length > 0) {
+            const filtered = serviceSuggestions.filter(s => s.toLowerCase().includes(val.toLowerCase()));
+            setFilteredServiceSuggestions(filtered);
+            setActiveServiceIndex(index);
+        } else {
+            setFilteredServiceSuggestions(serviceSuggestions);
+        }
+    };
+
+    const handleServiceMasterChange = (index: number, val: string) => {
+        const newItems = [...serviceItems];
+        newItems[index].masterName = val;
+        newItems[index].masterId = null;
+        setServiceItems(newItems);
+
+        if (val.length > 0) {
+            const filtered = masters.filter(m => m.name.toLowerCase().includes(val.toLowerCase()));
+            setFilteredMasterSuggestions(filtered);
+            setActiveMasterIndex(index);
+        } else {
+            setFilteredMasterSuggestions(masters);
+            setActiveMasterIndex(index);
+        }
+    };
+
+    const handleServicePriceChange = (index: number, val: string) => {
+        const newItems = [...serviceItems];
+        newItems[index].price = val;
+        setServiceItems(newItems);
+    };
+
+    const addServiceField = () => {
+        setServiceItems([...serviceItems, { id: Date.now(), value: '', masterId: null, masterName: '', price: '' }]);
+    };
+
+    const removeServiceField = (index: number) => {
+        if (serviceItems.length > 1) {
+            const newItems = [...serviceItems];
+            newItems.splice(index, 1);
+            setServiceItems(newItems);
         }
     };
 
@@ -302,44 +438,176 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                         </div>
                     </div>
 
-                    {/* Services */}
-                    <div>
-                        <label style={labelStyle}>Услуги</label>
-                        <input // Using input to match look, or textarea if multiple lines needed. Modal uses inputs per service.
-                            // Merging services to one text string for simple reading/editing here as per previous logic, 
-                            // or we should replicate the dynamic list. 
-                            // The image shows "Услуги" and then text. If editable, it's easier to keep as one block or reuse the dynamic list logic.
-                            // For "exact look" of the image, the image shows "Чистка, Покраска..." in one box. So one input/textarea is fine.
-                            name="services"
-                            style={inputStyle}
-                            value={formData.services}
-                            onChange={handleChange}
-                            readOnly={!isEditing}
-                        />
+                    {/* Services Section */}
+                    <div style={{ marginBottom: '1.5rem', border: '1px solid var(--border-subtle)', borderRadius: '12px', padding: '1rem', background: '#f8fafc' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                            <label style={{ ...labelStyle, marginBottom: 0 }}>Услуги и Мастера</label>
+                            {isEditing && (
+                                <button
+                                    type="button"
+                                    onClick={addServiceField}
+                                    style={{
+                                        padding: '0.4rem 0.8rem',
+                                        background: 'var(--accent-primary)',
+                                        color: 'white',
+                                        borderRadius: '8px',
+                                        fontSize: '0.8rem',
+                                        fontWeight: '600',
+                                        border: 'none',
+                                        cursor: 'pointer'
+                                    }}
+                                >+ Услуга</button>
+                            )}
+                        </div>
+
+                        {serviceItems.map((item, index) => (
+                            <div key={item.id} style={{
+                                display: 'grid',
+                                gridTemplateColumns: isEditing ? '2fr 1.5fr 1fr 40px' : '2fr 1.5fr 1fr',
+                                gap: '0.75rem',
+                                marginBottom: '0.75rem',
+                                alignItems: 'start'
+                            }}>
+                                {/* Service Name */}
+                                <div style={{ position: 'relative' }}>
+                                    <input
+                                        placeholder="Услуга..."
+                                        style={{ ...inputStyle, marginBottom: 0, padding: '0.6rem' }}
+                                        value={item.value}
+                                        onChange={(e) => handleServiceChange(index, e.target.value)}
+                                        onFocus={() => {
+                                            if (isEditing) {
+                                                const filtered = item.value
+                                                    ? serviceSuggestions.filter(s => s.toLowerCase().includes(item.value.toLowerCase()))
+                                                    : serviceSuggestions;
+                                                setFilteredServiceSuggestions(filtered);
+                                                setActiveServiceIndex(index);
+                                            }
+                                        }}
+                                        onBlur={() => setTimeout(() => setActiveServiceIndex(null), 200)}
+                                        readOnly={!isEditing}
+                                        autoComplete="off"
+                                    />
+                                    {activeServiceIndex === index && filteredServiceSuggestions.length > 0 && (
+                                        <ul className="suggestions-dropdown" style={{ top: '100%', position: 'absolute', zIndex: 10 }}>
+                                            {filteredServiceSuggestions.map((suggestion, i) => (
+                                                <li key={i} onClick={() => {
+                                                    const newItems = [...serviceItems];
+                                                    newItems[index].value = suggestion;
+                                                    setServiceItems(newItems);
+                                                    setActiveServiceIndex(null);
+                                                }}>{suggestion}</li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+
+                                {/* Master */}
+                                <div style={{ position: 'relative' }}>
+                                    {(() => {
+                                        let inheritedMasterName = '';
+                                        if (!item.masterName) {
+                                            for (let i = index; i >= 0; i--) {
+                                                if (serviceItems[i].masterName) {
+                                                    inheritedMasterName = serviceItems[i].masterName;
+                                                    break;
+                                                }
+                                            }
+                                        }
+
+                                        return (
+                                            <input
+                                                placeholder={isEditing ? (inheritedMasterName || "Мастер...") : "-"}
+                                                style={{
+                                                    ...inputStyle,
+                                                    marginBottom: 0,
+                                                    padding: '0.6rem',
+                                                    fontStyle: !item.masterName && inheritedMasterName ? 'italic' : 'normal',
+                                                    opacity: !item.masterName && inheritedMasterName ? 0.7 : 1
+                                                }}
+                                                value={item.masterName}
+                                                onChange={(e) => handleServiceMasterChange(index, e.target.value)}
+                                                onFocus={() => {
+                                                    if (isEditing) {
+                                                        const filtered = item.masterName
+                                                            ? masters.filter(m => m.name.toLowerCase().includes(item.masterName.toLowerCase()))
+                                                            : masters;
+                                                        setFilteredMasterSuggestions(filtered);
+                                                        setActiveMasterIndex(index);
+                                                    }
+                                                }}
+                                                onBlur={() => setTimeout(() => setActiveMasterIndex(null), 200)}
+                                                readOnly={!isEditing}
+                                                autoComplete="off"
+                                            />
+                                        );
+                                    })()}
+                                    {activeMasterIndex === index && filteredMasterSuggestions.length > 0 && (
+                                        <ul className="suggestions-dropdown" style={{ top: '100%', position: 'absolute', zIndex: 10 }}>
+                                            {filteredMasterSuggestions.map((m) => (
+                                                <li key={m.id} onClick={() => {
+                                                    const newItems = [...serviceItems];
+                                                    newItems[index].masterName = m.name;
+                                                    newItems[index].masterId = m.id;
+                                                    setServiceItems(newItems);
+                                                    setActiveMasterIndex(null);
+                                                }}>{m.name}</li>
+                                            ))}
+                                        </ul>
+                                    )}
+                                </div>
+
+                                {/* Price */}
+                                <div>
+                                    <input
+                                        type="number"
+                                        placeholder="Цена"
+                                        style={{ ...inputStyle, marginBottom: 0, padding: '0.6rem' }}
+                                        value={item.price}
+                                        onChange={(e) => handleServicePriceChange(index, e.target.value)}
+                                        readOnly={!isEditing}
+                                    />
+                                </div>
+
+                                {/* Remove Button */}
+                                {isEditing && serviceItems.length > 1 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => removeServiceField(index)}
+                                        style={{
+                                            border: 'none',
+                                            padding: 0,
+                                            background: '#fee2e2',
+                                            color: '#ef4444',
+                                            borderRadius: '8px',
+                                            height: '38px',
+                                            width: '100%',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            cursor: 'pointer'
+                                        }}
+                                    >✕</button>
+                                )}
+                            </div>
+                        ))}
                     </div>
 
-                    {/* Master */}
-                    <div>
-                        <label style={labelStyle}>Мастер</label>
-                        {isEditing ? (
-                            <select
-                                name="masterId"
-                                style={{ ...inputStyle, appearance: 'none' }} // Basic style
-                                value={formData.masterId || ''}
-                                onChange={handleChange}
-                            >
-                                <option value="" style={{ color: 'black' }}>Выберите мастера</option>
-                                {masters.map(m => (
-                                    <option key={m.id} value={m.id} style={{ color: 'black' }}>{m.name}</option>
-                                ))}
-                            </select>
-                        ) : (
-                            <input
-                                value={masters.find(m => m.id === Number(formData.masterId))?.name || 'Не назначен'}
-                                style={inputStyle}
-                                readOnly
-                            />
-                        )}
+                    {/* Master Primary (Old Field, hidden or read-only) */}
+                    <div style={{ display: 'none' }}>
+                        <label style={labelStyle}>Основной Мастер</label>
+                        <select
+                            name="masterId"
+                            style={{ ...inputStyle, appearance: 'none' }}
+                            value={formData.masterId || ''}
+                            onChange={handleChange}
+                            disabled={!isEditing}
+                        >
+                            <option value="">Выберите мастера</option>
+                            {masters.map(m => (
+                                <option key={m.id} value={m.id}>{m.name}</option>
+                            ))}
+                        </select>
                     </div>
 
                     {/* Comment */}

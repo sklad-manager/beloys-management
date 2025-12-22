@@ -26,25 +26,84 @@ export async function PATCH(
                 include: { master: true } // Include master to get percentage
             });
 
-            // 2. If status is 'Готово' and master exists, calculate and create salary log
-            if (status === 'Готово' && order.masterId && order.master) {
-                // Check if log already exists to avoid duplicates
-                const existingLog = await tx.salaryLog.findFirst({
+            // 2. If status is 'Готово', calculate and create salary log(s)
+            if (status === 'Готово') {
+                // Check if logs already exist to avoid duplicates
+                const existingLogs = await tx.salaryLog.findMany({
                     where: { orderId: id }
                 });
 
-                if (!existingLog) {
-                    const salaryAmount = order.price * (order.master.percentage / 100);
+                if (existingLogs.length === 0) {
+                    if (order.serviceDetails) {
+                        try {
+                            const details = JSON.parse(order.serviceDetails);
+                            // Group by master
+                            const masterPortions: Record<number, number> = {};
 
-                    await tx.salaryLog.create({
-                        data: {
-                            amount: salaryAmount,
-                            masterId: order.masterId,
-                            orderId: id,
-                            date: new Date(),
-                            isPaid: false
+                            for (const item of details) {
+                                let mId = item.masterId;
+
+                                // Robust check: if ID is missing but name is present, try to find in DB
+                                if (!mId && item.masterName) {
+                                    const foundMaster = await tx.master.findFirst({
+                                        where: { name: { equals: item.masterName, mode: 'insensitive' } }
+                                    });
+                                    if (foundMaster) mId = foundMaster.id;
+                                }
+
+                                if (mId) {
+                                    const price = parseFloat(item.price) || 0;
+                                    masterPortions[mId] = (masterPortions[mId] || 0) + price;
+                                }
+                            }
+
+                            // Create logs for each master
+                            for (const [mId, portion] of Object.entries(masterPortions)) {
+                                const master = await tx.master.findUnique({
+                                    where: { id: parseInt(mId) }
+                                });
+                                if (master) {
+                                    const salaryAmount = portion * (master.percentage / 100);
+                                    await tx.salaryLog.create({
+                                        data: {
+                                            amount: salaryAmount,
+                                            masterId: parseInt(mId),
+                                            orderId: id,
+                                            date: new Date(),
+                                            isPaid: false
+                                        }
+                                    });
+                                }
+                            }
+                        } catch (e) {
+                            console.error('Failed to parse serviceDetails during salary calculation', e);
+                            // Fallback to single master if parsing fails
+                            if (order.masterId && order.master) {
+                                const salaryAmount = order.price * (order.master.percentage / 100);
+                                await tx.salaryLog.create({
+                                    data: {
+                                        amount: salaryAmount,
+                                        masterId: order.masterId,
+                                        orderId: id,
+                                        date: new Date(),
+                                        isPaid: false
+                                    }
+                                });
+                            }
                         }
-                    });
+                    } else if (order.masterId && order.master) {
+                        // Old logic fallback
+                        const salaryAmount = order.price * (order.master.percentage / 100);
+                        await tx.salaryLog.create({
+                            data: {
+                                amount: salaryAmount,
+                                masterId: order.masterId,
+                                orderId: id,
+                                date: new Date(),
+                                isPaid: false
+                            }
+                        });
+                    }
                 }
             }
 

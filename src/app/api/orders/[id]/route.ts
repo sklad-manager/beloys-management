@@ -52,6 +52,7 @@ export async function PUT(
             color,
             quantity,
             services,
+            serviceDetails,
             price,
             comment,
             masterId,
@@ -68,10 +69,7 @@ export async function PUT(
             return NextResponse.json({ error: 'Order not found' }, { status: 404 });
         }
 
-        if (currentOrder.editCount >= 1) {
-            // Allow admin override or specific logic if needed later, but strict for now
-            return NextResponse.json({ error: 'Order can strictly be edited only once.' }, { status: 403 });
-        }
+        // Removed strict edit limit to allow flexible order management via the View button.
 
         // Handle Client Logic (Find or Create)
         let clientId = undefined;
@@ -102,6 +100,7 @@ export async function PUT(
             color,
             quantity: quantity ? parseInt(quantity) : undefined,
             services,
+            serviceDetails: serviceDetails ? JSON.stringify(serviceDetails) : undefined,
             price: parseFloat(price) || 0,
             comment,
             status,

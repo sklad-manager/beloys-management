@@ -63,6 +63,7 @@ export async function POST(req: Request) {
             brand,
             color,
             services,
+            serviceDetails,
             price,
             prepayment,
             paymentMethod,
@@ -96,7 +97,6 @@ export async function POST(req: Request) {
         }
 
         // Генерация номера заказа (автоинкремент строки)
-        // Get the latest order to determine the next order number
         const lastOrder = await prisma.order.findFirst({
             orderBy: {
                 id: 'desc',
@@ -110,7 +110,6 @@ export async function POST(req: Request) {
                 nextNumber = parsed + 1;
             }
         }
-        // Формат: простое число (1, 2, 3...)
         const orderNumber = nextNumber.toString();
 
         const newOrder = await prisma.order.create({
@@ -124,10 +123,11 @@ export async function POST(req: Request) {
                 brand: brand || '',
                 color: color || '',
                 services: services || '',
+                serviceDetails: serviceDetails ? JSON.stringify(serviceDetails) : null,
                 price: parseFloat(price),
                 comment: comment || '',
                 quantity: quantity ? parseInt(quantity) : 1,
-                masterPrice: 0, // Assuming default values for these
+                masterPrice: 0,
                 materialPrice: 0,
                 paymentDate: null,
                 status: 'Принят в работу',

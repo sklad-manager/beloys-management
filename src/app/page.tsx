@@ -34,6 +34,7 @@ export default function Home() {
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
+  const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
@@ -93,18 +94,27 @@ export default function Home() {
   }, [isAuthenticated, searchQuery]);
 
   const handleCreateOrder = async (data: any) => {
-    try {
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      });
-      if (res.ok) {
-        fetchOrders(); // Refresh list
+    // If we're editing, the data is already saved by the modal itself (I added PUT logic there)
+    // but if it's a NEW order, we still need this POST logic.
+    if (!editingOrderId) {
+      try {
+        const res = await fetch('/api/orders', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (res.ok) {
+          fetchOrders();
+        }
+      } catch (e) {
+        console.error(e);
       }
-    } catch (e) {
-      console.error(e);
+    } else {
+      // Just refresh if it was edit mode (edit logic is inside modal now)
+      fetchOrders();
     }
+    setIsModalOpen(false);
+    setEditingOrderId(null);
   };
 
   const handleLogout = async () => {
@@ -183,7 +193,12 @@ export default function Home() {
           </div>
 
           <button
-            onClick={() => selectedOrderId && router.push(`/orders/${selectedOrderId}`)}
+            onClick={() => {
+              if (selectedOrderId) {
+                setEditingOrderId(selectedOrderId);
+                setIsModalOpen(true);
+              }
+            }}
             disabled={!selectedOrderId}
             className="btn"
             style={{
@@ -297,8 +312,12 @@ export default function Home() {
 
       <OrderFormModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingOrderId(null);
+        }}
         onSubmit={handleCreateOrder}
+        orderId={editingOrderId}
       />
 
       <CashModal
