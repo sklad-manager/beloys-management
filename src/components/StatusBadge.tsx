@@ -6,10 +6,10 @@ interface StatusBadgeProps {
     status: string;
     orderId: number;
     onUpdate?: () => void;
-    onRequestPayment: (orderId: number, orderNumber: string, remainingAmount: number, prepayment: number) => void;
     totalPrice?: number;
     prepayment?: number;
     orderNumber?: string;
+    onRequestPayment: (orderId: number, orderNumber: string, remainingAmount: number, prepayment: number) => void;
 }
 
 const STATUS_OPTIONS = [
@@ -22,10 +22,10 @@ export default function StatusBadge({
     status,
     orderId,
     onUpdate,
-    onRequestPayment,
     totalPrice = 0,
     prepayment = 0,
-    orderNumber = ''
+    orderNumber = '',
+    onRequestPayment
 }: StatusBadgeProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [currentStatus, setCurrentStatus] = useState(status);
@@ -55,7 +55,12 @@ export default function StatusBadge({
         // If status is "Выдан", trigger payment flow via parent
         if (newStatus === 'Выдан') {
             const remaining = (totalPrice || 0) - (prepayment || 0);
-            onRequestPayment(orderId, orderNumber || '', remaining > 0 ? remaining : 0, prepayment || 0);
+            onRequestPayment(
+                orderId,
+                orderNumber || '',
+                remaining > 0 ? remaining : 0,
+                prepayment || 0
+            );
             return;
         }
 
@@ -86,19 +91,18 @@ export default function StatusBadge({
     const getStyle = (s: string) => {
         if (s === 'Готово') {
             return {
-                background: 'rgba(249, 115, 22, 0.2)', // Orange-500 equivalent with opacity
-                color: '#fb923c', // Orange-400
+                background: 'rgba(249, 115, 22, 0.2)',
+                color: '#fb923c',
                 border: '1px solid rgba(249, 115, 22, 0.3)'
             };
         }
         if (s === 'Выдан') {
             return {
-                background: 'rgba(34, 197, 94, 0.2)', // Green
+                background: 'rgba(34, 197, 94, 0.2)',
                 color: '#4ade80',
                 border: '1px solid rgba(34, 197, 94, 0.3)'
             };
         }
-        // Default "Принят в работу"
         return {
             background: 'rgba(99, 102, 241, 0.2)',
             color: '#a5b4fc',

@@ -10,13 +10,12 @@ export async function POST(
         const resolvedParams = await params;
         const id = parseInt(resolvedParams.id);
         const { paymentAmount, paymentMethod } = await request.json();
+        const amount = parseFloat(paymentAmount) || 0;
 
-        // Validate inputs
-        if (!paymentMethod || !['Cash', 'Terminal'].includes(paymentMethod)) {
+        // Validate inputs - only require paymentMethod if amount > 0
+        if (amount > 0 && (!paymentMethod || !['Cash', 'Terminal'].includes(paymentMethod))) {
             return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 });
         }
-
-        const amount = parseFloat(paymentAmount) || 0;
 
         // Fetch current order to get details for transaction description
         const currentOrder = await prisma.order.findUnique({
@@ -42,25 +41,33 @@ export async function POST(
         }
 
         // Execute Transaction
-        const [updatedOrder, transaction] = await prisma.$transaction([
+        const operations = [
             // 1. Update Order
             prisma.order.update({
                 where: { id },
                 data: updateData
-            }),
-            // 2. Create Cash Transaction (Income)
-            prisma.cashTransaction.create({
-                data: {
-                    type: 'Income',
-                    category: 'Client Payment', // As defined in schema comment
-                    description: `Оплата заказа #${currentOrder.orderNumber}`,
-                    amount: amount,
-                    method: paymentMethod,
-                    relatedEntity: currentOrder.clientName || 'Клиент',
-                    date: new Date()
-                }
             })
-        ]);
+        ];
+
+        // 2. Create Cash Transaction (Income) ONLY if amount > 0
+        if (amount > 0) {
+            operations.push(
+                prisma.cashTransaction.create({
+                    data: {
+                        type: 'Income',
+                        category: 'Client Payment',
+                        description: `Оплата заказа #${currentOrder.orderNumber} (Выдача)`,
+                        amount: amount,
+                        method: paymentMethod,
+                        relatedEntity: currentOrder.clientName || 'Клиент',
+                        date: new Date()
+                    }
+                }) as any // Type cast because of transaction array mixed types
+            );
+        }
+
+        const results = await prisma.$transaction(operations);
+        const updatedOrder = results[0];
 
         return NextResponse.json({ success: true, order: updatedOrder });
 

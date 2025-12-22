@@ -1,9 +1,11 @@
-
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+// import { prisma } from '@/lib/prisma';
 
+// Временно отключено - таблица OrderEditLog не существует в базе данных
 export async function GET() {
-    try {
+    return NextResponse.json([]);
+
+    /* try {
         const logs = await prisma.orderEditLog.findMany({
             orderBy: { changedAt: 'desc' },
             include: {
@@ -28,5 +30,5 @@ export async function GET() {
     } catch (error) {
         console.error('Error fetching edit logs:', error);
         return NextResponse.json({ error: 'Failed to fetch logs' }, { status: 500 });
-    }
+    } */
 }
