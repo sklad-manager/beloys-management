@@ -9,6 +9,7 @@ import ThreeDotsMenu from '@/components/ThreeDotsMenu';
 import AdminAuthModal from '@/components/AdminAuthModal';
 import AdminDashboardModal from '@/components/AdminDashboardModal';
 import StatusBadge from '@/components/StatusBadge';
+import OrderIssueModal from '@/components/OrderIssueModal';
 
 interface Order {
   id: number;
@@ -36,6 +37,15 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
+
+  // Payment Modal State
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentModalData, setPaymentModalData] = useState({
+    orderId: 0,
+    orderNumber: '',
+    totalPrice: 0,
+    prepayment: 0
+  });
 
   const checkAuth = async () => {
     try {
@@ -104,6 +114,29 @@ export default function Home() {
       setOrders([]);
     } catch (e) {
       console.error(e);
+    }
+  };
+
+  const handlePaymentComplete = async (amount: number, method: 'Cash' | 'Terminal') => {
+    try {
+      const res = await fetch(`/api/orders/${paymentModalData.orderId}/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          paymentAmount: amount,
+          paymentMethod: method
+        }),
+      });
+
+      if (res.ok) {
+        setIsPaymentModalOpen(false);
+        fetchOrders(searchQuery);
+      } else {
+        alert('Ошибка при завершении заказа');
+      }
+    } catch (error) {
+      console.error('Failed to complete order', error);
+      alert('Ошибка сети');
     }
   };
 
@@ -240,6 +273,15 @@ export default function Home() {
                             totalPrice={order.price}
                             prepayment={(order.prepaymentCash || 0) + (order.prepaymentTerminal || 0)}
                             orderNumber={order.orderNumber}
+                            onRequestPayment={(id, num, remaining, prepay) => {
+                              setPaymentModalData({
+                                orderId: id,
+                                orderNumber: num,
+                                totalPrice: remaining + prepay,
+                                prepayment: prepay
+                              });
+                              setIsPaymentModalOpen(true);
+                            }}
                           />
                         </td>
                       </tr>
@@ -275,6 +317,15 @@ export default function Home() {
       <AdminDashboardModal
         isOpen={isAdminDashboardOpen}
         onClose={() => setIsAdminDashboardOpen(false)}
+      />
+
+      <OrderIssueModal
+        isOpen={isPaymentModalOpen}
+        onClose={() => setIsPaymentModalOpen(false)}
+        onConfirm={handlePaymentComplete}
+        totalPrice={paymentModalData.totalPrice}
+        prepayment={paymentModalData.prepayment}
+        orderNumber={paymentModalData.orderNumber}
       />
     </main>
   );

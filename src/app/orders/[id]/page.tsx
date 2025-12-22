@@ -3,7 +3,7 @@
 import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import StatusBadge from '@/components/StatusBadge';
-import PaymentConfirmationModal from '@/components/PaymentConfirmationModal';
+import OrderIssueModal from '@/components/OrderIssueModal';
 
 interface Order {
     id: number;
@@ -37,7 +37,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
 
     // Payment Modal State
     const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-    const [paymentDetails, setPaymentDetails] = useState({ amount: 0, prepayment: 0 });
+    const [paymentDetails, setPaymentDetails] = useState({ totalPrice: 0, prepayment: 0 });
 
     const [formData, setFormData] = useState<any>({});
     const [masters, setMasters] = useState<{ id: number, name: string }[]>([]);
@@ -221,7 +221,7 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
                         prepayment={order.prepaymentCash + order.prepaymentTerminal}
                         orderNumber={order.orderNumber}
                         onRequestPayment={(oid, onum, remaining, prep) => {
-                            setPaymentDetails({ amount: remaining, prepayment: prep });
+                            setPaymentDetails({ totalPrice: remaining + prep, prepayment: prep });
                             setPaymentModalOpen(true);
                         }}
                     />
@@ -383,11 +383,11 @@ export default function OrderPage({ params }: { params: Promise<{ id: string }> 
             </div>
 
             {order && (
-                <PaymentConfirmationModal
+                <OrderIssueModal
                     isOpen={paymentModalOpen}
                     onClose={() => setPaymentModalOpen(false)}
                     onConfirm={handlePaymentConfirm}
-                    totalPrice={order.price}
+                    totalPrice={paymentDetails.totalPrice}
                     prepayment={paymentDetails.prepayment}
                     orderNumber={order.orderNumber}
                 />
