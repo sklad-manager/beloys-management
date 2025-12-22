@@ -22,10 +22,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
         prepayment: '',
         paymentMethod: 'Cash',
         comment: '',
-
-        quantity: 1,
-        masterId: null as number | null,
-        masterName: ''
+        quantity: 1
     });
 
     const [shoeTypeSuggestions, setShoeTypeSuggestions] = useState<string[]>([]);
@@ -41,10 +38,13 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
     const [showBrandSuggestions, setShowBrandSuggestions] = useState(false);
 
     // Services state
-    const [serviceItems, setServiceItems] = useState<{ id: number, value: string }[]>([{ id: Date.now(), value: '' }]);
+    const [serviceItems, setServiceItems] = useState<{ id: number, value: string, masterId: number | null, masterName: string, price: string }[]>([
+        { id: Date.now(), value: '', masterId: null, masterName: '', price: '' }
+    ]);
     const [serviceSuggestions, setServiceSuggestions] = useState<string[]>([]);
     const [filteredServiceSuggestions, setFilteredServiceSuggestions] = useState<string[]>([]);
     const [activeServiceIndex, setActiveServiceIndex] = useState<number | null>(null);
+    const [activeMasterIndex, setActiveMasterIndex] = useState<number | null>(null);
 
     // Masters State
     const [masters, setMasters] = useState<{ id: number, name: string }[]>([]);
@@ -73,11 +73,9 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
                 prepayment: '',
                 paymentMethod: 'Cash',
                 comment: '',
-                quantity: 1,
-                masterId: null,
-                masterName: ''
+                quantity: 1
             });
-            setServiceItems([{ id: Date.now(), value: '' }]);
+            setServiceItems([{ id: Date.now(), value: '', masterId: null, masterName: '', price: '' }]);
             setFoundClient(null);
             setClientSuggestions([]);
             setShowClientSuggestions(false);
@@ -263,37 +261,40 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
         }
     };
 
-    const addServiceField = () => {
-        setServiceItems([...serviceItems, { id: Date.now(), value: '' }]);
+    const handleServicePriceChange = (index: number, value: string) => {
+        const newItems = [...serviceItems];
+        newItems[index].price = value;
+        setServiceItems(newItems);
     };
 
-    const selectServiceSuggestion = (value: string) => {
-        if (activeServiceIndex !== null) {
-            const newItems = [...serviceItems];
-            newItems[activeServiceIndex].value = value;
-            setServiceItems(newItems);
-            setActiveServiceIndex(null);
-        }
-    };
-
-    const handleMasterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const value = e.target.value;
-        setFormData({ ...formData, masterName: value, masterId: null });
+    const handleServiceMasterChange = (index: number, value: string) => {
+        const newItems = [...serviceItems];
+        newItems[index].masterName = value;
+        newItems[index].masterId = null;
+        setServiceItems(newItems);
 
         if (value.length > 0) {
             const filtered = masters.filter(item =>
                 item.name.toLowerCase().includes(value.toLowerCase())
             );
             setFilteredMasterSuggestions(filtered);
-            setShowMasterSuggestions(true);
+            setActiveMasterIndex(index);
         } else {
-            setShowMasterSuggestions(false);
+            setFilteredMasterSuggestions(masters);
+            setActiveMasterIndex(index);
         }
     };
 
-    const selectMaster = (master: { id: number, name: string }) => {
-        setFormData({ ...formData, masterName: master.name, masterId: master.id });
-        setShowMasterSuggestions(false);
+    const selectMasterSuggestion = (index: number, master: { id: number, name: string }) => {
+        const newItems = [...serviceItems];
+        newItems[index].masterName = master.name;
+        newItems[index].masterId = master.id;
+        setServiceItems(newItems);
+        setActiveMasterIndex(null);
+    };
+
+    const addServiceField = () => {
+        setServiceItems([...serviceItems, { id: Date.now(), value: '', masterId: null, masterName: '', price: '' }]);
     };
 
     const removeServiceField = (index: number) => {
@@ -304,19 +305,47 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
         }
     };
 
+
     if (!isOpen) return null;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
-        // Construct services string
-        const servicesString = serviceItems
-            .map(item => item.value.trim())
-            .filter(val => val.length > 0)
+        // Resolve implicit masters and construct services data
+        let currentMasterId: number | null = null;
+        let currentMasterName: string = '';
+
+        const processedServices = serviceItems
+            .filter(item => item.value.trim().length > 0)
+            .map(item => {
+                if (item.masterName.trim().length > 0) {
+                    currentMasterId = item.masterId;
+                    currentMasterName = item.masterName;
+                }
+                return {
+                    service: item.value.trim(),
+                    masterId: currentMasterId,
+                    masterName: currentMasterName,
+                    price: item.price || '0'
+                };
+            });
+
+        // For backward compatibility and single master display, 
+        // we use the master of the first service as the main masterId
+        const firstServiceMasterId = processedServices.length > 0 ? processedServices[0].masterId : null;
+
+        const servicesString = processedServices
+            .map(s => `${s.service} (${s.masterName}${s.price !== '0' ? `: ${s.price}` : ''})`)
             .join(', ');
 
-        await onSubmit({ ...formData, services: servicesString });
+        await onSubmit({
+            ...formData,
+            services: servicesString,
+            masterId: firstServiceMasterId,
+            // We can also pass the full structured data if the API is updated later
+            serviceDetails: processedServices
+        });
         setLoading(false);
         onClose();
     };
@@ -388,6 +417,32 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
                             gap: 2.5rem;
                             max-width: 700px;
                         }
+                    }
+                    .suggestions-dropdown {
+                        position: absolute;
+                        top: 100%;
+                        left: 0;
+                        width: 100%;
+                        background: #ffffff;
+                        border: '1px solid var(--border-subtle)';
+                        border-radius: 12px;
+                        max-height: 200px;
+                        overflow-y: auto;
+                        list-style: none;
+                        padding: 0.5rem 0;
+                        margin: 0;
+                        z-index: 1005;
+                        box-shadow: var(--shadow-lg);
+                    }
+                    .suggestions-dropdown li {
+                        padding: 0.75rem 1rem;
+                        cursor: pointer;
+                        border-bottom: 1px solid var(--border-subtle);
+                        color: var(--text-primary);
+                        transition: background 0.2s;
+                    }
+                    .suggestions-dropdown li:hover {
+                        background: var(--bg-primary);
                     }
                 `}</style>
                 <div style={{
@@ -695,10 +750,18 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
                             <div>
                                 <label style={labelStyle}>Услуги</label>
                                 {serviceItems.map((item, index) => (
-                                    <div key={item.id} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', position: 'relative' }}>
-                                        <div style={{ position: 'relative', width: '100%' }}>
+                                    <div key={item.id} style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'minmax(200px, 1.8fr) minmax(120px, 1fr) 100px 40px',
+                                        gap: '0.75rem',
+                                        marginBottom: '0.75rem',
+                                        position: 'relative',
+                                        alignItems: 'start'
+                                    }}>
+                                        {/* Услуга */}
+                                        <div style={{ position: 'relative' }}>
                                             <input
-                                                placeholder="Чистка, Покраска, Ремонт..."
+                                                placeholder="Чистка..."
                                                 style={{ ...inputStyle, marginBottom: 0 }}
                                                 value={item.value}
                                                 onChange={(e) => handleServiceChange(index, e.target.value)}
@@ -713,52 +776,74 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
                                                 autoComplete="off"
                                             />
                                             {activeServiceIndex === index && filteredServiceSuggestions.length > 0 && (
-                                                <ul style={{
-                                                    position: 'absolute',
-                                                    top: '100%',
-                                                    left: 0,
-                                                    width: '100%',
-                                                    background: '#ffffff',
-                                                    border: '1px solid var(--border-subtle)',
-                                                    borderRadius: '12px',
-                                                    maxHeight: '200px',
-                                                    overflowY: 'auto',
-                                                    listStyle: 'none',
-                                                    padding: '0.5rem 0',
-                                                    margin: 0,
-                                                    zIndex: 1001,
-                                                    boxShadow: 'var(--shadow-lg)'
-                                                }}>
+                                                <ul className="suggestions-dropdown">
                                                     {filteredServiceSuggestions.map((suggestion, i) => (
-                                                        <li
-                                                            key={i}
-                                                            onClick={() => selectServiceSuggestion(suggestion)}
-                                                            style={{
-                                                                padding: '0.75rem 1rem',
-                                                                cursor: 'pointer',
-                                                                borderBottom: '1px solid var(--border-subtle)',
-                                                                color: 'var(--text-primary)',
-                                                                transition: 'background 0.2s'
-                                                            }}
-                                                            onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
-                                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                                        >
-                                                            {suggestion}
-                                                        </li>
+                                                        <li key={i} onClick={() => {
+                                                            const newItems = [...serviceItems];
+                                                            newItems[index].value = suggestion;
+                                                            setServiceItems(newItems);
+                                                            setActiveServiceIndex(null);
+                                                        }}>{suggestion}</li>
                                                     ))}
                                                 </ul>
                                             )}
                                         </div>
-                                        {serviceItems.length > 1 && (
+
+                                        {/* Мастер */}
+                                        <div style={{ position: 'relative' }}>
+                                            <input
+                                                placeholder="Мастер..."
+                                                style={{ ...inputStyle, marginBottom: 0, fontSize: '0.9rem' }}
+                                                value={item.masterName}
+                                                onChange={(e) => handleServiceMasterChange(index, e.target.value)}
+                                                onFocus={() => {
+                                                    const filtered = item.masterName
+                                                        ? masters.filter(m => m.name.toLowerCase().includes(item.masterName.toLowerCase()))
+                                                        : masters;
+                                                    setFilteredMasterSuggestions(filtered);
+                                                    setActiveMasterIndex(index);
+                                                }}
+                                                onBlur={() => setTimeout(() => setActiveMasterIndex(null), 200)}
+                                                autoComplete="off"
+                                            />
+                                            {activeMasterIndex === index && filteredMasterSuggestions.length > 0 && (
+                                                <ul className="suggestions-dropdown">
+                                                    {filteredMasterSuggestions.map((m) => (
+                                                        <li key={m.id} onClick={() => selectMasterSuggestion(index, m)}>{m.name}</li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+
+                                        {/* Цена услуги */}
+                                        <div>
+                                            <input
+                                                type="number"
+                                                placeholder="Цена"
+                                                style={{ ...inputStyle, marginBottom: 0, fontSize: '0.9rem', padding: '0.75rem 0.5rem' }}
+                                                value={item.price}
+                                                onChange={(e) => handleServicePriceChange(index, e.target.value)}
+                                            />
+                                        </div>
+
+                                        {serviceItems.length > 1 ? (
                                             <button
                                                 type="button"
                                                 onClick={() => removeServiceField(index)}
                                                 className="btn"
-                                                style={{ padding: '0 1rem', background: '#fee2e2', color: '#ef4444', borderRadius: '10px' }}
-                                            >
-                                                ✕
-                                            </button>
-                                        )}
+                                                style={{
+                                                    padding: 0,
+                                                    background: '#fee2e2',
+                                                    color: '#ef4444',
+                                                    borderRadius: '10px',
+                                                    height: '46px',
+                                                    width: '40px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >✕</button>
+                                        ) : <div />}
                                     </div>
                                 ))}
                                 <button
@@ -771,62 +856,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit }: OrderFormM
                                 </button>
                             </div>
 
-                            {/* Мастер */}
-                            <div style={{ position: 'relative' }}>
-                                <label style={labelStyle}>Мастер</label>
-                                <input
-                                    name="masterName"
-                                    placeholder="Выберите мастера"
-                                    style={inputStyle}
-                                    value={formData.masterName}
-                                    onChange={handleMasterChange}
-                                    onFocus={() => {
-                                        const filtered = formData.masterName
-                                            ? masters.filter(item => item.name.toLowerCase().includes(formData.masterName.toLowerCase()))
-                                            : masters;
-                                        setFilteredMasterSuggestions(filtered);
-                                        setShowMasterSuggestions(true);
-                                    }}
-                                    onBlur={() => setTimeout(() => setShowMasterSuggestions(false), 200)}
-                                    autoComplete="off"
-                                />
-                                {showMasterSuggestions && filteredMasterSuggestions.length > 0 && (
-                                    <ul style={{
-                                        position: 'absolute',
-                                        top: '100%',
-                                        left: 0,
-                                        width: '100%',
-                                        background: '#ffffff',
-                                        border: '1px solid var(--border-subtle)',
-                                        borderRadius: '12px',
-                                        maxHeight: '200px',
-                                        overflowY: 'auto',
-                                        listStyle: 'none',
-                                        padding: '0.5rem 0',
-                                        margin: 0,
-                                        zIndex: 1002,
-                                        boxShadow: 'var(--shadow-lg)'
-                                    }}>
-                                        {filteredMasterSuggestions.map((master) => (
-                                            <li
-                                                key={master.id}
-                                                onClick={() => selectMaster(master)}
-                                                style={{
-                                                    padding: '0.75rem 1rem',
-                                                    cursor: 'pointer',
-                                                    borderBottom: '1px solid var(--border-subtle)',
-                                                    color: 'var(--text-primary)',
-                                                    transition: 'background 0.2s'
-                                                }}
-                                                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg-primary)'}
-                                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
-                                            >
-                                                <div style={{ fontWeight: '600' }}>{master.name}</div>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                )}
-                            </div>
+
 
                             <div>
                                 <label style={labelStyle}>Комментарий</label>
