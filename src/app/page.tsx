@@ -105,17 +105,23 @@ export default function Home() {
           body: JSON.stringify(data)
         });
         if (res.ok) {
-          fetchOrders();
+          fetchOrders(searchQuery);
+          setIsModalOpen(false);
+          setEditingOrderId(null);
+        } else {
+          const errData = await res.json();
+          alert('Ошибка при создании заказа: ' + (errData.error || 'Неизвестная ошибка'));
         }
       } catch (e) {
         console.error(e);
+        alert('Ошибка сети при создании заказа');
       }
     } else {
       // Just refresh if it was edit mode (edit logic is inside modal now)
-      fetchOrders();
+      fetchOrders(searchQuery);
+      setIsModalOpen(false);
+      setEditingOrderId(null);
     }
-    setIsModalOpen(false);
-    setEditingOrderId(null);
   };
 
   const handleLogout = async () => {
@@ -197,7 +203,7 @@ export default function Home() {
             onClick={() => {
               if (selectedOrderId) {
                 setEditingOrderId(selectedOrderId);
-                setIsReadOnly(true);
+                setIsReadOnly(false); // Changed to false to allow editing as requested in previous steps
                 setIsModalOpen(true);
               }
             }}
