@@ -173,6 +173,21 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
 
     if (!isOpen) return null;
 
+    const navBtnStyle = (active: boolean): React.CSSProperties => ({
+        padding: '0.75rem 1.5rem',
+        background: active ? 'var(--accent-primary)' : 'rgba(255,255,255,0.7)',
+        color: active ? 'white' : 'var(--text-secondary)',
+        border: 'none',
+        borderRadius: '12px',
+        cursor: 'pointer',
+        fontWeight: '600',
+        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: active ? 'var(--accent-glow)' : 'var(--shadow-sm)',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '0.5rem'
+    });
+
     return (
         <div style={{
             position: 'fixed',
@@ -180,382 +195,432 @@ export default function CashModal({ isOpen, onClose }: CashModalProps) {
             left: 0,
             width: '100vw',
             height: '100vh',
-            background: 'rgba(15, 23, 42, 0.3)',
-            backdropFilter: 'blur(8px)',
+            background: 'var(--bg-primary)',
+            zIndex: 1000,
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
+            flexDirection: 'column',
+            overflow: 'hidden',
+            animation: 'fadeIn 0.3s ease-out'
         }}>
-            <div className="glass-card" style={{ width: '100%', maxWidth: '1100px', height: '97vh', display: 'flex', flexDirection: 'column', position: 'relative', margin: '0 1rem' }}>
-
-                {/* Header */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid var(--border-subtle)', paddingBottom: '1rem' }}>
-                    <h2>💰 Касса</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
-                </div>
-
-                {/* Balance Cards */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
-                    {/* Cash Balance */}
+            {/* Header */}
+            <header style={{
+                background: 'rgba(255, 255, 255, 0.8)',
+                backdropFilter: 'blur(20px)',
+                padding: '1.25rem 2rem',
+                borderBottom: '1px solid var(--border-subtle)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                zIndex: 10
+            }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <div style={{
-                        background: 'rgba(74, 222, 128, 0.1)',
-                        border: '1px solid rgba(74, 222, 128, 0.3)',
+                        width: '45px',
+                        height: '45px',
+                        background: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
                         borderRadius: '12px',
-                        padding: '1rem',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>💵</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Наличные</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#4ade80' }}>
-                            {cashBalance.toLocaleString()} грн
-                        </div>
-                    </div>
-
-                    {/* Terminal Balance */}
-                    <div style={{
-                        background: 'rgba(99, 102, 241, 0.1)',
-                        border: '1px solid rgba(99, 102, 241, 0.3)',
-                        borderRadius: '12px',
-                        padding: '1rem',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>💳</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Терминал</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#a5b4fc' }}>
-                            {terminalBalance.toLocaleString()} грн
-                        </div>
-                    </div>
-
-                    {/* Total Balance */}
-                    <div style={{
-                        background: 'rgba(245, 158, 11, 0.1)',
-                        border: '1px solid rgba(245, 158, 11, 0.3)',
-                        borderRadius: '12px',
-                        padding: '1rem',
-                        textAlign: 'center'
-                    }}>
-                        <div style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>💰</div>
-                        <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Общий</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: totalBalance >= 0 ? '#fbbf24' : '#f87171' }}>
-                            {totalBalance.toLocaleString()} грн
-                        </div>
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '1.5rem',
+                        boxShadow: '0 4px 12px rgba(245, 158, 11, 0.2)'
+                    }}>💰</div>
+                    <div>
+                        <h2 style={{ fontSize: '1.5rem', margin: 0, letterSpacing: '-0.02em' }}>Касса и Финансы</h2>
+                        <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Управление денежными потоками</div>
                     </div>
                 </div>
+                <button
+                    onClick={onClose}
+                    style={{
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        border: 'none',
+                        background: 'rgba(0,0,0,0.05)',
+                        fontSize: '1.5rem',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.1)'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'rgba(0,0,0,0.05)'}
+                >&times;</button>
+            </header>
 
-                {/* Content */}
-                {mode === 'view' ? (
-                    <>
-                        {/* Actions */}
-                        <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', justifyContent: 'center', flexWrap: 'wrap' }}>
-                            <button
-                                onClick={() => { setMode('add'); setTxType('Income'); }}
-                                className="btn"
-                                style={{ background: 'rgba(74, 222, 128, 0.2)', color: '#4ade80', border: '1px solid rgba(74, 222, 128, 0.3)' }}
-                            >
-                                + Внести
-                            </button>
-                            <button
-                                onClick={() => { setMode('add'); setTxType('Expense'); }}
-                                className="btn"
-                                style={{ background: 'rgba(248, 113, 113, 0.2)', color: '#f87171', border: '1px solid rgba(248, 113, 113, 0.3)' }}
-                            >
-                                - Изъять
-                            </button>
-                            <button
-                                onClick={() => { setMode('report'); setQuickFilter(0); }}
-                                className="btn btn-glass"
-                            >
-                                📈 Отчет
-                            </button>
-                            <button
-                                onClick={() => setMode('inventory')}
-                                className="btn btn-glass"
-                            >
-                                📊 Инвентаризация
-                            </button>
+            <main style={{ flex: 1, overflowY: 'auto', padding: '2rem' }}>
+                <div className="container" style={{ maxWidth: '1200px', margin: '0 auto' }}>
+
+                    {/* Balance Grid */}
+                    <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+                        gap: '1.5rem',
+                        marginBottom: '2.5rem'
+                    }}>
+                        <div style={{
+                            background: 'linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%)',
+                            border: '1px solid rgba(74, 222, 128, 0.2)',
+                            borderRadius: '24px',
+                            padding: '1.5rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1.5rem',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}>
+                            <div style={{ fontSize: '2.5rem' }}>💵</div>
+                            <div>
+                                <div style={{ fontSize: '0.9rem', color: '#065f46', fontWeight: '600' }}>Наличные</div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: '800', color: '#059669' }}>
+                                    {cashBalance.toLocaleString()} <span style={{ fontSize: '1.1rem' }}>грн</span>
+                                </div>
+                            </div>
                         </div>
 
-                        {/* List */}
-                        <div style={{ flex: 1, overflowY: 'auto', background: 'rgba(0,0,0,0.2)', borderRadius: '12px', padding: '1rem' }}>
-                            {transactions.length === 0 ? (
-                                <div style={{ textAlign: 'center', color: 'gray', marginTop: '2rem' }}>История пуста</div>
-                            ) : (
-                                transactions.map(t => (
-                                    <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
-                                        <div>
-                                            <div style={{ fontWeight: '500' }}>{t.description || 'Без описания'}</div>
-                                            <div style={{ fontSize: '0.8rem', color: 'gray' }}>{formatDate(t.date)}</div>
+                        <div style={{
+                            background: 'linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%)',
+                            border: '1px solid rgba(99, 102, 241, 0.2)',
+                            borderRadius: '24px',
+                            padding: '1.5rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1.5rem',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}>
+                            <div style={{ fontSize: '2.5rem' }}>💳</div>
+                            <div>
+                                <div style={{ fontSize: '0.9rem', color: '#3730a3', fontWeight: '600' }}>Терминал</div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: '800', color: '#4f46e5' }}>
+                                    {terminalBalance.toLocaleString()} <span style={{ fontSize: '1.1rem' }}>грн</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={{
+                            background: 'linear-gradient(135deg, #fffbeb 0%, #fff7ed 100%)',
+                            border: '1px solid rgba(245, 158, 11, 0.2)',
+                            borderRadius: '24px',
+                            padding: '1.5rem',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '1.5rem',
+                            boxShadow: 'var(--shadow-sm)'
+                        }}>
+                            <div style={{ fontSize: '2.5rem' }}>📈</div>
+                            <div>
+                                <div style={{ fontSize: '0.9rem', color: '#92400e', fontWeight: '600' }}>Общий остаток</div>
+                                <div style={{ fontSize: '1.8rem', fontWeight: '800', color: totalBalance >= 0 ? '#d97706' : '#dc2626' }}>
+                                    {totalBalance.toLocaleString()} <span style={{ fontSize: '1.1rem' }}>грн</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Navigation Tabs */}
+                    <div style={{
+                        display: 'flex',
+                        background: 'rgba(0,0,0,0.03)',
+                        padding: '0.5rem',
+                        borderRadius: '16px',
+                        marginBottom: '2rem',
+                        gap: '0.5rem',
+                        width: 'fit-content',
+                        margin: '0 auto 2.5rem auto'
+                    }}>
+                        <button onClick={() => setMode('view')} style={navBtnStyle(mode === 'view')}>🕒 История</button>
+                        <button onClick={() => { setMode('add'); setTxType('Income'); }} style={navBtnStyle(mode === 'add' && txType === 'Income')}>💰 Пополнение</button>
+                        <button onClick={() => { setMode('add'); setTxType('Expense'); }} style={navBtnStyle(mode === 'add' && txType === 'Expense')}>📉 Списание</button>
+                        <button onClick={() => setMode('report')} style={navBtnStyle(mode === 'report')}>📊 Отчеты</button>
+                        <button onClick={() => setMode('inventory')} style={navBtnStyle(mode === 'inventory')}>📋 Ревизия</button>
+                    </div>
+
+                    {/* Content Section */}
+                    <div style={{ position: 'relative' }}>
+                        {mode === 'view' && (
+                            <div className="glass-card animate-fade-in" style={{ padding: '0', overflow: 'hidden' }}>
+                                <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border-subtle)', background: 'rgba(255,255,255,0.5)' }}>
+                                    <h3 style={{ fontSize: '1.1rem', margin: 0 }}>Последние операции</h3>
+                                </div>
+                                <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+                                    {transactions.length === 0 ? (
+                                        <div style={{ padding: '4rem', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                            Здесь пока нет записей...
                                         </div>
-                                        <div style={{ color: t.type === 'Income' ? '#4ade80' : '#f87171', fontWeight: 'bold' }}>
-                                            {t.type === 'Income' ? '+' : '-'}{t.amount} грн
+                                    ) : (
+                                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                            <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-secondary)', zIndex: 1 }}>
+                                                <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border-subtle)' }}>
+                                                    <th style={{ padding: '1rem 2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>ДАТА</th>
+                                                    <th style={{ padding: '1rem 2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>ОПИСАНИЕ</th>
+                                                    <th style={{ padding: '1rem 2rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>МЕТОД</th>
+                                                    <th style={{ padding: '1rem 2rem', fontSize: '0.85rem', color: 'var(--text-muted)', textAlign: 'right' }}>СУММА</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {transactions.map(t => (
+                                                    <tr key={t.id} style={{ borderBottom: '1px solid var(--border-subtle)', transition: 'background 0.2s' }} className="table-row-hover">
+                                                        <td style={{ padding: '1rem 2rem', fontSize: '0.9rem' }}>{formatDate(t.date)}</td>
+                                                        <td style={{ padding: '1rem 2rem' }}>
+                                                            <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{t.description || 'Ручная операция'}</div>
+                                                            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{t.category}</div>
+                                                        </td>
+                                                        <td style={{ padding: '1rem 2rem' }}>
+                                                            <span style={{
+                                                                padding: '4px 10px',
+                                                                borderRadius: '20px',
+                                                                fontSize: '0.75rem',
+                                                                fontWeight: '600',
+                                                                background: t.method === 'Terminal' ? '#eef2ff' : '#f0fdf4',
+                                                                color: t.method === 'Terminal' ? '#4f46e5' : '#16a34a'
+                                                            }}>{t.method === 'Terminal' ? '💳 Карта' : '💵 Нал'}</span>
+                                                        </td>
+                                                        <td style={{
+                                                            padding: '1rem 2rem',
+                                                            textAlign: 'right',
+                                                            fontWeight: '700',
+                                                            color: t.type === 'Income' ? '#22c55e' : '#ef4444',
+                                                            fontSize: '1.1rem'
+                                                        }}>
+                                                            {t.type === 'Income' ? '+' : '-'}{t.amount.toLocaleString()}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        {mode === 'add' && (
+                            <div className="animate-fade-in" style={{ maxWidth: '600px', margin: '0 auto' }}>
+                                <div className="glass-card" style={{ padding: '2.5rem' }}>
+                                    <h3 style={{
+                                        textAlign: 'center',
+                                        marginBottom: '2rem',
+                                        color: txType === 'Income' ? '#16a34a' : '#ef4444',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        gap: '0.75rem'
+                                    }}>
+                                        {txType === 'Income' ? '➕ Пополнение кассы' : '➖ Списание средств'}
+                                    </h3>
+
+                                    <form onSubmit={handleSubmit}>
+                                        <div style={{ marginBottom: '1.5rem' }}>
+                                            <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Сумма операции</label>
+                                            <div style={{ position: 'relative' }}>
+                                                <input
+                                                    className="input"
+                                                    type="number"
+                                                    value={amount}
+                                                    onChange={e => setAmount(e.target.value)}
+                                                    required
+                                                    autoFocus
+                                                    style={{ fontSize: '2rem', fontWeight: '800', textAlign: 'center', paddingRight: '4rem' }}
+                                                />
+                                                <div style={{ position: 'absolute', right: '1.5rem', top: '50%', transform: 'translateY(-50%)', fontWeight: '800', fontSize: '1.2rem', color: 'var(--text-muted)' }}>грн</div>
+                                            </div>
                                         </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </>
-                ) : mode === 'add' ? (
-                    /* Add Form */
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '1rem' }}>
-                        <form onSubmit={handleSubmit}>
-                            <h3 style={{ marginBottom: '1rem', textAlign: 'center', color: txType === 'Income' ? '#4ade80' : '#f87171' }}>
-                                {txType === 'Income' ? 'Внесение денег' : 'Изъятие денег'}
-                            </h3>
 
-                            <div style={{ marginBottom: '1rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Сумма</label>
-                                <input
-                                    type="number"
-                                    value={amount}
-                                    onChange={e => setAmount(e.target.value)}
-                                    autoFocus
-                                    required
-                                    style={{
-                                        width: '100%', padding: '1rem', fontSize: '1.5rem', background: 'rgba(255,255,255,0.05)',
-                                        border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white'
-                                    }}
-                                />
-                            </div>
+                                        <div style={{ marginBottom: '2rem' }}>
+                                            <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>Назначение платежа</label>
+                                            <input
+                                                className="input"
+                                                type="text"
+                                                value={description}
+                                                onChange={e => setDescription(e.target.value)}
+                                                placeholder="Введите причину..."
+                                                required
+                                            />
+                                        </div>
 
-                            <div style={{ marginBottom: '2rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Комментарий / Причина</label>
-                                <input
-                                    type="text"
-                                    value={description}
-                                    onChange={e => setDescription(e.target.value)}
-                                    placeholder={txType === 'Income' ? 'Например: Пополнение, Оплата...' : 'Например: Аренда, Закупка...'}
-                                    required
-                                    style={{
-                                        width: '100%', padding: '1rem', background: 'rgba(255,255,255,0.05)',
-                                        border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white'
-                                    }}
-                                />
-                            </div>
+                                        <div style={{ marginBottom: '2.5rem' }}>
+                                            <label style={{ display: 'block', fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.75rem' }}>Источник / Метод</label>
+                                            <div style={{ display: 'flex', gap: '1rem' }}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPaymentMethod('Cash')}
+                                                    style={{
+                                                        flex: 1, padding: '1rem', border: '2px solid',
+                                                        borderRadius: '16px', display: 'flex', flexDirection: 'column',
+                                                        alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: '0.2s',
+                                                        borderColor: paymentMethod === 'Cash' ? '#22c55e' : 'var(--border-subtle)',
+                                                        background: paymentMethod === 'Cash' ? '#f0fdf4' : 'white',
+                                                        color: paymentMethod === 'Cash' ? '#16a34a' : 'var(--text-secondary)'
+                                                    }}
+                                                >
+                                                    <span style={{ fontSize: '1.5rem' }}>💵</span>
+                                                    <span style={{ fontWeight: '600' }}>Наличные</span>
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPaymentMethod('Terminal')}
+                                                    style={{
+                                                        flex: 1, padding: '1rem', border: '2px solid',
+                                                        borderRadius: '16px', display: 'flex', flexDirection: 'column',
+                                                        alignItems: 'center', gap: '0.5rem', cursor: 'pointer', transition: '0.2s',
+                                                        borderColor: paymentMethod === 'Terminal' ? '#6366f1' : 'var(--border-subtle)',
+                                                        background: paymentMethod === 'Terminal' ? '#eef2ff' : 'white',
+                                                        color: paymentMethod === 'Terminal' ? '#4f46e5' : 'var(--text-secondary)'
+                                                    }}
+                                                >
+                                                    <span style={{ fontSize: '1.5rem' }}>💳</span>
+                                                    <span style={{ fontWeight: '600' }}>Терминал</span>
+                                                </button>
+                                            </div>
+                                        </div>
 
-                            {/* Payment Method Selection */}
-                            <div style={{ marginBottom: '2rem' }}>
-                                <label style={{ display: 'block', marginBottom: '0.75rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Способ оплаты</label>
-                                <div style={{ display: 'flex', gap: '0.75rem' }}>
-                                    <button
-                                        type="button"
-                                        onClick={() => setPaymentMethod('Cash')}
-                                        style={{
-                                            flex: 1,
-                                            padding: '1.25rem',
-                                            background: paymentMethod === 'Cash' ? '#f0fdf4' : 'white',
-                                            border: paymentMethod === 'Cash' ? '2px solid #22c55e' : '1px solid var(--border-subtle)',
-                                            borderRadius: '16px',
-                                            color: paymentMethod === 'Cash' ? '#16a34a' : 'var(--text-secondary)',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s',
-                                            fontSize: '1.5rem',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            boxShadow: paymentMethod === 'Cash' ? 'none' : 'var(--shadow-sm)'
-                                        }}
-                                    >
-                                        <div>💵</div>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>Наличные</div>
-                                    </button>
-                                    <button
-                                        type="button"
-                                        onClick={() => setPaymentMethod('Terminal')}
-                                        style={{
-                                            flex: 1,
-                                            padding: '1.25rem',
-                                            background: paymentMethod === 'Terminal' ? '#f5f3ff' : 'white',
-                                            border: paymentMethod === 'Terminal' ? '2px solid #6366f1' : '1px solid var(--border-subtle)',
-                                            borderRadius: '16px',
-                                            color: paymentMethod === 'Terminal' ? '#4f46e5' : 'var(--text-secondary)',
-                                            cursor: 'pointer',
-                                            transition: 'all 0.2s',
-                                            fontSize: '1.5rem',
-                                            display: 'flex',
-                                            flexDirection: 'column',
-                                            alignItems: 'center',
-                                            gap: '0.5rem',
-                                            boxShadow: paymentMethod === 'Terminal' ? 'none' : 'var(--shadow-sm)'
-                                        }}
-                                    >
-                                        <div>💳</div>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: '600' }}>Терминал</div>
-                                    </button>
+                                        <div style={{ display: 'flex', gap: '1rem' }}>
+                                            <button type="button" onClick={() => setMode('view')} className="btn btn-glass" style={{ flex: 1 }}>Отмена</button>
+                                            <button
+                                                type="submit"
+                                                className="btn btn-primary"
+                                                style={{
+                                                    flex: 2,
+                                                    background: txType === 'Income' ? 'linear-gradient(to right, #22c55e, #16a34a)' : 'linear-gradient(to right, #ef4444, #dc2626)',
+                                                    border: 'none',
+                                                    fontWeight: '700'
+                                                }}
+                                            >Подтвердить операцию</button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
+                        )}
 
-                            <div style={{ display: 'flex', gap: '1rem' }}>
-                                <button
-                                    type="button"
-                                    onClick={() => setMode('view')}
-                                    className="btn btn-glass"
-                                    style={{ flex: 1 }}
-                                >
-                                    Отмена
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="btn"
-                                    style={{
-                                        flex: 2,
-                                        background: txType === 'Income' ? 'linear-gradient(135deg, #4ade80 0%, #22c55e 100%)' : 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
-                                        color: 'white',
-                                        fontWeight: 'bold',
-                                        border: 'none',
-                                        fontSize: '1.1rem',
-                                        boxShadow: txType === 'Income' ? '0 4px 15px rgba(34, 197, 94, 0.3)' : '0 4px 15px rgba(239, 68, 68, 0.3)'
-                                    }}
-                                >
-                                    ✓ Выполнить
-                                </button>
+                        {mode === 'report' && (
+                            <div className="animate-fade-in glass-card">
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+                                    <h3>Финансовый отчет</h3>
+                                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                        <button onClick={() => setQuickFilter(0)} style={{ ...navBtnStyle(startDate === (new Date().toISOString().split('T')[0])), padding: '0.4rem 1rem', fontSize: '0.8rem' }}>Сегодня</button>
+                                        <button onClick={() => setQuickFilter(7)} style={{ ...navBtnStyle(false), padding: '0.4rem 1rem', fontSize: '0.8rem' }}>7 дней</button>
+                                        <button onClick={() => setQuickFilter(30)} style={{ ...navBtnStyle(false), padding: '0.4rem 1rem', fontSize: '0.8rem' }}>Месяц</button>
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '2rem' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Начало периода</label>
+                                        <input className="input" type="date" value={startDate} onChange={e => setStartDate(e.target.value)} />
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Конец периода</label>
+                                        <input className="input" type="date" value={endDate} onChange={e => setEndDate(e.target.value)} />
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '2rem' }}>
+                                    <div style={{ padding: '1.5rem', background: '#f0fdf4', borderRadius: '20px', textAlign: 'center' }}>
+                                        <div style={{ color: '#059669', fontWeight: '600' }}>Общий приход</div>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: '800' }}>+{filteredTransactions.filter(t => t.type === 'Income').reduce((acc, t) => acc + t.amount, 0).toLocaleString()} <span style={{ fontSize: '0.9rem' }}>грн</span></div>
+                                    </div>
+                                    <div style={{ padding: '1.5rem', background: '#fef2f2', borderRadius: '20px', textAlign: 'center' }}>
+                                        <div style={{ color: '#dc2626', fontWeight: '600' }}>Общий расход</div>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: '800' }}>-{filteredTransactions.filter(t => t.type === 'Expense').reduce((acc, t) => acc + t.amount, 0).toLocaleString()} <span style={{ fontSize: '0.9rem' }}>грн</span></div>
+                                    </div>
+                                    <div style={{ padding: '1.5rem', background: 'var(--bg-primary)', borderRadius: '20px', textAlign: 'center', border: '1px dashed var(--border-subtle)' }}>
+                                        <div style={{ color: 'var(--text-secondary)', fontWeight: '600' }}>Чистая разница</div>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: '800' }}>{(filteredTransactions.filter(t => t.type === 'Income').reduce((acc, t) => acc + t.amount, 0) - filteredTransactions.filter(t => t.type === 'Expense').reduce((acc, t) => acc + t.amount, 0)).toLocaleString()} <span style={{ fontSize: '0.9rem' }}>грн</span></div>
+                                    </div>
+                                </div>
+
+                                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                                    {filteredTransactions.map(t => (
+                                        <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid var(--border-subtle)' }}>
+                                            <div>
+                                                <div style={{ fontWeight: '600' }}>{t.description || 'Операция'}</div>
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatDate(t.date)} • {t.method}</div>
+                                            </div>
+                                            <div style={{ color: t.type === 'Income' ? '#22c55e' : '#ef4444', fontWeight: '700' }}>
+                                                {t.type === 'Income' ? '+' : '-'}{t.amount.toLocaleString()} грн
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </form>
+                        )}
+
+                        {mode === 'inventory' && (
+                            <div className="animate-fade-in glass-card" style={{ maxWidth: '800px', margin: '0 auto' }}>
+                                <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+                                    <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>📦 Ревизия кассы</h3>
+                                    <p>Сверьте фактическую сумму в кассе с данными программы</p>
+                                </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', marginBottom: '2.5rem' }}>
+                                    <div style={{ padding: '2rem', background: 'rgba(74, 222, 128, 0.05)', borderRadius: '24px', border: '1px solid rgba(74, 222, 128, 0.2)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                            <span style={{ fontWeight: '600' }}>💵 Наличные</span>
+                                            <span style={{ color: 'var(--text-muted)' }}>В системе: {cashBalance}</span>
+                                        </div>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Фактически:</label>
+                                        <input
+                                            className="input"
+                                            type="number"
+                                            value={actualCash}
+                                            onChange={e => setActualCash(e.target.value)}
+                                            placeholder={cashBalance.toString()}
+                                            style={{ fontSize: '1.5rem', fontWeight: '700', textAlign: 'center' }}
+                                        />
+                                        {actualCash && (
+                                            <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>
+                                                Разница: <span style={{ fontWeight: '700', color: (parseFloat(actualCash) - cashBalance) >= 0 ? '#16a34a' : '#ef4444' }}>
+                                                    {(parseFloat(actualCash) - cashBalance) > 0 ? '+' : ''}
+                                                    {(parseFloat(actualCash) - cashBalance).toLocaleString()} грн
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div style={{ padding: '2rem', background: 'rgba(99, 102, 241, 0.05)', borderRadius: '24px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
+                                            <span style={{ fontWeight: '600' }}>💳 Терминал</span>
+                                            <span style={{ color: 'var(--text-muted)' }}>В системе: {terminalBalance}</span>
+                                        </div>
+                                        <label style={{ display: 'block', fontSize: '0.85rem', marginBottom: '0.5rem' }}>Фактически:</label>
+                                        <input
+                                            className="input"
+                                            type="number"
+                                            value={actualTerminal}
+                                            onChange={e => setActualTerminal(e.target.value)}
+                                            placeholder={terminalBalance.toString()}
+                                            style={{ fontSize: '1.5rem', fontWeight: '700', textAlign: 'center' }}
+                                        />
+                                        {actualTerminal && (
+                                            <div style={{ marginTop: '1rem', textAlign: 'center', fontSize: '0.9rem' }}>
+                                                Разница: <span style={{ fontWeight: '700', color: (parseFloat(actualTerminal) - terminalBalance) >= 0 ? '#16a34a' : '#ef4444' }}>
+                                                    {(parseFloat(actualTerminal) - terminalBalance) > 0 ? '+' : ''}
+                                                    {(parseFloat(actualTerminal) - terminalBalance).toLocaleString()} грн
+                                                </span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '1rem' }}>
+                                    <button onClick={() => setMode('view')} className="btn btn-glass" style={{ flex: 1 }}>Завтра</button>
+                                    <button onClick={submitInventory} className="btn btn-primary" style={{ flex: 2, fontWeight: '700' }}>Завершить ревизию</button>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                ) : mode === 'report' ? (
-                    /* Report View */
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
-                        <h3 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>📈 Отчет по кассе</h3>
+                </div>
+            </main>
 
-
-
-                        {/* Date Inputs */}
-                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                            <div style={{ flex: 1 }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>От</label>
-                                <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', color: 'var(--text-primary)', outline: 'none', boxShadow: 'var(--shadow-sm)' }} />
-                            </div>
-                            <div style={{ flex: 1 }}>
-                                <label style={{ display: 'block', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.3rem' }}>До</label>
-                                <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} style={{ width: '100%', padding: '0.75rem', background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '12px', color: 'var(--text-primary)', outline: 'none', boxShadow: 'var(--shadow-sm)' }} />
-                            </div>
-                        </div>
-
-                        {/* Summary */}
-                        <div style={{ background: 'var(--bg-primary)', borderRadius: '16px', padding: '1.25rem', marginBottom: '1.5rem', border: '1px solid var(--border-subtle)' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                <span style={{ color: '#16a34a', fontWeight: '600' }}>Приход:</span>
-                                <span style={{ fontWeight: 'bold' }}>+{filteredTransactions.filter(t => t.type === 'Income').reduce((acc, t) => acc + t.amount, 0).toLocaleString()} грн</span>
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                                <span style={{ color: '#ef4444', fontWeight: '600' }}>Расход:</span>
-                                <span style={{ fontWeight: 'bold' }}>-{filteredTransactions.filter(t => t.type === 'Expense').reduce((acc, t) => acc + t.amount, 0).toLocaleString()} грн</span>
-                            </div>
-                            <div style={{ borderTop: '1px solid var(--border-highlight)', paddingTop: '0.75rem', marginTop: '0.75rem', display: 'flex', justifyContent: 'space-between' }}>
-                                <span style={{ fontWeight: '600' }}>Итого за период:</span>
-                                <span style={{ fontWeight: '800', color: 'var(--text-primary)', fontSize: '1.1rem' }}>
-                                    {(filteredTransactions.filter(t => t.type === 'Income').reduce((acc, t) => acc + t.amount, 0) - filteredTransactions.filter(t => t.type === 'Expense').reduce((acc, t) => acc + t.amount, 0)).toLocaleString()} грн
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Filtered List */}
-                        <div style={{ flex: 1, overflowY: 'auto' }}>
-                            {filteredTransactions.map(t => (
-                                <div key={t.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', borderBottom: '1px solid var(--border-subtle)' }}>
-                                    <div>
-                                        <div style={{ fontWeight: '500', fontSize: '0.9rem' }}>{t.description || 'Без описания'}</div>
-                                        <div style={{ fontSize: '0.75rem', color: 'gray' }}>{formatDate(t.date)} • {t.method === 'Terminal' ? '💳' : '💵'}</div>
-                                    </div>
-                                    <div style={{ color: t.type === 'Income' ? '#4ade80' : '#f87171', fontWeight: 'bold', fontSize: '0.9rem' }}>
-                                        {t.type === 'Income' ? '+' : '-'}{t.amount}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-
-                        <button onClick={() => setMode('view')} className="btn btn-glass" style={{ width: '100%', marginTop: '1rem' }}>
-                            Назад
-                        </button>
-                    </div>
-                ) : (
-                    /* Inventory Mode */
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '1rem', display: 'flex', flexDirection: 'column' }}>
-                        <h3 style={{ textAlign: 'center', marginBottom: '1.5rem', color: '#a5b4fc' }}>📊 Инвентаризация</h3>
-
-                        <div style={{ marginBottom: '2rem' }}>
-                            <div style={{ marginBottom: '1.5rem', background: 'rgba(74, 222, 128, 0.05)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(74, 222, 128, 0.2)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                    <h4 style={{ color: '#4ade80', margin: 0 }}>💵 Наличные</h4>
-                                    <div style={{ fontSize: '0.8rem', color: 'gray' }}>По системе: {cashBalance.toLocaleString()} грн</div>
-                                </div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Фактический остаток:</label>
-                                <input
-                                    type="number"
-                                    value={actualCash}
-                                    onChange={e => setActualCash(e.target.value)}
-                                    placeholder={cashBalance.toString()}
-                                    style={{
-                                        width: '100%', padding: '0.75rem', background: 'rgba(0,0,0,0.3)',
-                                        border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white', fontSize: '1.2rem'
-                                    }}
-                                />
-                                {actualCash && (
-                                    <div style={{ marginTop: '0.5rem', textAlign: 'right', fontSize: '0.9rem' }}>
-                                        Расхождение:
-                                        <span style={{
-                                            color: (parseFloat(actualCash) - cashBalance) >= 0 ? '#4ade80' : '#f87171',
-                                            fontWeight: 'bold', marginLeft: '0.5rem'
-                                        }}>
-                                            {(parseFloat(actualCash) - cashBalance) > 0 ? '+' : ''}
-                                            {(parseFloat(actualCash) - cashBalance).toLocaleString()} грн
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <div style={{ marginBottom: '1.5rem', background: 'rgba(99, 102, 241, 0.05)', padding: '1rem', borderRadius: '12px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                                    <h4 style={{ color: '#a5b4fc', margin: 0 }}>💳 Терминал</h4>
-                                    <div style={{ fontSize: '0.8rem', color: 'gray' }}>По системе: {terminalBalance.toLocaleString()} грн</div>
-                                </div>
-                                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Фактический остаток:</label>
-                                <input
-                                    type="number"
-                                    value={actualTerminal}
-                                    onChange={e => setActualTerminal(e.target.value)}
-                                    placeholder={terminalBalance.toString()}
-                                    style={{
-                                        width: '100%', padding: '0.75rem', background: 'rgba(0,0,0,0.3)',
-                                        border: '1px solid var(--border-subtle)', borderRadius: '8px', color: 'white', fontSize: '1.2rem'
-                                    }}
-                                />
-                                {actualTerminal && (
-                                    <div style={{ marginTop: '0.5rem', textAlign: 'right', fontSize: '0.9rem' }}>
-                                        Расхождение:
-                                        <span style={{
-                                            color: (parseFloat(actualTerminal) - terminalBalance) >= 0 ? '#4ade80' : '#f87171',
-                                            fontWeight: 'bold', marginLeft: '0.5rem'
-                                        }}>
-                                            {(parseFloat(actualTerminal) - terminalBalance) > 0 ? '+' : ''}
-                                            {(parseFloat(actualTerminal) - terminalBalance).toLocaleString()} грн
-                                        </span>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        <div style={{ marginTop: 'auto', display: 'flex', gap: '1rem' }}>
-                            <button
-                                onClick={() => setMode('view')}
-                                className="btn btn-glass"
-                                style={{ flex: 1 }}
-                            >
-                                Отмена
-                            </button>
-                            <button
-                                onClick={submitInventory}
-                                className="btn btn-primary"
-                                style={{ flex: 2 }}
-                            >
-                                ✓ Завершить инвентаризацию
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-            </div>
+            <style jsx>{`
+                .table-row-hover:hover {
+                    background: rgba(0,0,0,0.02);
+                }
+                @keyframes fadeIn {
+                    from { opacity: 0; transform: scale(0.98); }
+                    to { opacity: 1; transform: scale(1); }
+                }
+            `}</style>
         </div>
     );
 }
