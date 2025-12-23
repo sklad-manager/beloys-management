@@ -126,7 +126,7 @@ export async function POST(req: Request) {
                 color: color || '',
                 services: services || '',
                 serviceDetails: serviceDetails ? JSON.stringify(serviceDetails) : null,
-                price: parseFloat(price),
+                price: parseFloat(price) || 0,
                 comment: comment || '',
                 quantity: quantity ? parseInt(quantity) : 1,
                 masterPrice: 0,
