@@ -592,6 +592,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId, isR
                                             onChange={handleClientNameChange}
                                             autoComplete="off"
                                             disabled={isReadOnly}
+                                            required
                                         />
                                         {foundClient && (
                                             <button
@@ -662,6 +663,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId, isR
                                         onChange={handlePhoneChange}
                                         autoComplete="off"
                                         disabled={isReadOnly}
+                                        required
                                     />
                                 </div>
                             </div>

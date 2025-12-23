@@ -117,8 +117,8 @@ export async function POST(req: Request) {
         const newOrder = await prisma.order.create({
             data: {
                 orderNumber,
-                clientName,
-                phone,
+                clientName: clientName || 'Без имени',
+                phone: phone || '',
                 client: finalClientId ? { connect: { id: finalClientId } } : undefined,
                 master: masterId ? { connect: { id: Number(masterId) } } : undefined,
                 shoeType: shoeType || 'Обувь',
@@ -139,8 +139,10 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json(newOrder);
-    } catch (error) {
+    } catch (error: any) {
         console.error('API Error:', error);
-        return NextResponse.json({ error: 'Ошибка создания заказа' }, { status: 500 });
+        return NextResponse.json({
+            error: 'Ошибка создания заказа: ' + (error.message || 'Неизвестная ошибка сервера')
+        }, { status: 500 });
     }
 }
