@@ -30,11 +30,38 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
     const [salaryLogs, setSalaryLogs] = useState<any[]>([]);
     const [editLogs, setEditLogs] = useState<EditLog[]>([]);
 
+    // Salary Filtering
+    const [salaryStart, setSalaryStart] = useState('');
+    const [salaryEnd, setSalaryEnd] = useState('');
+
     useEffect(() => {
         if (isOpen) {
             fetchMasters();
         }
     }, [isOpen]);
+
+    const handlePaySalary = async (masterId: number, masterName: string, amount: number, logIds: number[]) => {
+        if (amount <= 0) return;
+        if (!confirm(`Выплатить ${amount.toFixed(2)} грн мастеру ${masterName}?`)) return;
+
+        try {
+            const res = await fetch('/api/salary-logs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ logIds, masterId, amount, masterName })
+            });
+
+            if (res.ok) {
+                alert('Выплата оформлена');
+                fetchSalaryLogs();
+            } else {
+                alert('Ошибка при оформлении выплаты');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Сетевая ошибка');
+        }
+    };
 
     const fetchMasters = async () => {
         setLoading(true);
@@ -281,9 +308,64 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
 
                     {activeTab === 'salaries' && (
                         <div>
+                            {/* Date Filter */}
+                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', background: 'var(--bg-primary)', padding: '1rem', borderRadius: '16px' }}>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>С:</label>
+                                    <input type="date" value={salaryStart} onChange={e => setSalaryStart(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+                                </div>
+                                <div style={{ flex: 1 }}>
+                                    <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>По:</label>
+                                    <input type="date" value={salaryEnd} onChange={e => setSalaryEnd(e.target.value)} style={{ ...inputStyle, width: '100%' }} />
+                                </div>
+                            </div>
+
+                            {/* Summary by Master (Only Unpaid) */}
+                            <div style={{ marginBottom: '2rem' }}>
+                                <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>💰 К выплате (неоплаченные)</h3>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+                                    {masters.map(m => {
+                                        const unpaidLogs = salaryLogs.filter(log => {
+                                            const isMaster = log.masterId === m.id;
+                                            const isUnpaid = !log.isPaid;
+                                            const logDate = new Date(log.date);
+                                            const isAfterStart = salaryStart ? logDate >= new Date(salaryStart) : true;
+                                            const isBeforeEnd = salaryEnd ? logDate <= new Date(salaryEnd + 'T23:59:59') : true;
+                                            return isMaster && isUnpaid && isAfterStart && isBeforeEnd;
+                                        });
+
+                                        const total = unpaidLogs.reduce((acc, log) => acc + log.amount, 0);
+                                        const ids = unpaidLogs.map(l => l.id);
+
+                                        if (total <= 0) return null;
+
+                                        return (
+                                            <div key={m.id} style={{
+                                                background: 'white', border: '1px solid var(--border-subtle)',
+                                                padding: '1rem', borderRadius: '16px', display: 'flex',
+                                                justifyContent: 'space-between', alignItems: 'center'
+                                            }}>
+                                                <div>
+                                                    <div style={{ fontWeight: '600' }}>{m.name}</div>
+                                                    <div style={{ color: '#16a34a', fontWeight: 'bold' }}>{total.toFixed(2)} грн</div>
+                                                </div>
+                                                <button
+                                                    onClick={() => handlePaySalary(m.id, m.name, total, ids)}
+                                                    className="btn btn-primary"
+                                                    style={{ padding: '0.5rem 0.75rem', fontSize: '0.8rem' }}
+                                                >
+                                                    Выплатить
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+
+                            <h3 style={{ fontSize: '1rem', marginBottom: '1rem' }}>📜 История начислений</h3>
                             <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--text-secondary)' }}>
-                                <thead>
-                                    <tr style={{ borderBottom: '1px solid var(--border-subtle)', textAlign: 'left', background: 'var(--bg-primary)' }}>
+                                <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-primary)', zIndex: 1 }}>
+                                    <tr style={{ borderBottom: '1px solid var(--border-subtle)', textAlign: 'left' }}>
                                         <th style={{ padding: '1rem' }}>Дата</th>
                                         <th style={{ padding: '1rem' }}>Мастер</th>
                                         <th style={{ padding: '1rem' }}>Заказ</th>
@@ -292,24 +374,31 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {salaryLogs.map((log) => (
-                                        <tr key={log.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
-                                            <td style={{ padding: '1rem' }}>
-                                                {new Date(log.date).toLocaleDateString()}
-                                            </td>
-                                            <td style={{ padding: '1rem' }}>{log.master?.name || '-'}</td>
-                                            <td style={{ padding: '1rem', fontFamily: 'monospace' }}>#{log.orderNumber}</td>
-                                            <td style={{ padding: '1rem', color: '#16a34a', fontWeight: '600' }}>
-                                                {log.amount.toFixed(2)} грн
-                                            </td>
-                                            <td style={{ padding: '1rem' }}>
-                                                {log.isPaid ?
-                                                    <span style={{ color: '#4ade80', fontSize: '0.8rem', border: '1px solid #4ade80', padding: '2px 8px', borderRadius: '10px' }}>Оплачено</span> :
-                                                    <span style={{ color: '#fb923c', fontSize: '0.8rem', border: '1px solid #fb923c', padding: '2px 8px', borderRadius: '10px' }}>Не оплачено</span>
-                                                }
-                                            </td>
-                                        </tr>
-                                    ))}
+                                    {salaryLogs
+                                        .filter(log => {
+                                            const logDate = new Date(log.date);
+                                            const isAfterStart = salaryStart ? logDate >= new Date(salaryStart) : true;
+                                            const isBeforeEnd = salaryEnd ? logDate <= new Date(salaryEnd + 'T23:59:59') : true;
+                                            return isAfterStart && isBeforeEnd;
+                                        })
+                                        .map((log) => (
+                                            <tr key={log.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                                                <td style={{ padding: '1rem' }}>
+                                                    {new Date(log.date).toLocaleDateString()}
+                                                </td>
+                                                <td style={{ padding: '1rem' }}>{log.master?.name || '-'}</td>
+                                                <td style={{ padding: '1rem', fontFamily: 'monospace' }}>#{log.orderNumber}</td>
+                                                <td style={{ padding: '1rem', color: '#16a34a', fontWeight: '600' }}>
+                                                    {log.amount.toFixed(2)} грн
+                                                </td>
+                                                <td style={{ padding: '1rem' }}>
+                                                    {log.isPaid ?
+                                                        <span style={{ color: '#22c55e', fontSize: '0.75rem', background: '#f0fdf4', padding: '2px 8px', borderRadius: '10px', border: '1px solid #dcfce7' }}>Оплачено</span> :
+                                                        <span style={{ color: '#f59e0b', fontSize: '0.75rem', background: '#fffbeb', padding: '2px 8px', borderRadius: '10px', border: '1px solid #fef3c7' }}>В ожидании</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        ))}
                                     {salaryLogs.length === 0 && (
                                         <tr>
                                             <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'gray' }}>

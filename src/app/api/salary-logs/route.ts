@@ -60,3 +60,42 @@ export async function GET() {
         );
     }
 }
+
+export async function POST(req: Request) {
+    try {
+        const { logIds, masterId, amount, masterName } = await req.json();
+
+        if (!logIds || !Array.isArray(logIds)) {
+            return NextResponse.json({ error: 'Missing logIds' }, { status: 400 });
+        }
+
+        // 1. Mark logs as paid
+        await prisma.salaryLog.updateMany({
+            where: {
+                id: { in: logIds }
+            },
+            data: {
+                isPaid: true,
+                paidAt: new Date()
+            }
+        });
+
+        // 2. Create a cash transaction (Expense)
+        await prisma.cashTransaction.create({
+            data: {
+                type: 'Expense',
+                category: 'Master Salary',
+                description: `Выплата зарплаты: ${masterName}`,
+                amount: parseFloat(amount),
+                method: 'Cash', // Defaulting to Cash for salary payouts
+                relatedEntity: masterName,
+                date: new Date()
+            }
+        });
+
+        return NextResponse.json({ success: true });
+    } catch (error) {
+        console.error('Error marking salary as paid:', error);
+        return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    }
+}
