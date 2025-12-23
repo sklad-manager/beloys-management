@@ -130,14 +130,22 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
         const changes: string[] = [];
         if (oldD.price !== newD.price) changes.push(`Цена: ${oldD.price} -> ${newD.price}`);
         if (oldD.shoeType !== newD.shoeType) changes.push(`Изделие: ${oldD.shoeType} -> ${newD.shoeType}`);
+        if (oldD.brand !== newD.brand) changes.push(`Бренд: ${oldD.brand} -> ${newD.brand}`);
+        if (oldD.color !== newD.color) changes.push(`Цвет: ${oldD.color} -> ${newD.color}`);
+        if (oldD.quantity !== newD.quantity) changes.push(`Кол-во: ${oldD.quantity} -> ${newD.quantity}`);
+        if (oldD.services !== newD.services) changes.push(`Услуги изменены`);
         if (oldD.comment !== newD.comment) changes.push(`Коммент изменен`);
-        if (oldD.masterId !== newD.masterId) changes.push(`Мастер изменен`);
 
-        if (changes.length === 0) return <span style={{ color: 'gray' }}>Незначительные изменения</span>;
+        // Master comparison
+        const oldM = Number(oldD.masterId);
+        const newM = Number(newD.masterId);
+        if (oldM !== newM && !isNaN(newM)) changes.push(`Мастер изменен`);
+
+        if (changes.length === 0) return <span style={{ color: 'gray' }}>Технические изменения</span>;
 
         return (
             <div style={{ fontSize: '0.85rem' }}>
-                {changes.map((c, i) => <div key={i}>{c}</div>)}
+                {changes.map((c, i) => <div key={i} style={{ marginBottom: '2px' }}>• {c}</div>)}
             </div>
         );
     };
