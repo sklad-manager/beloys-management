@@ -52,13 +52,6 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
     const [currentYear] = useState(new Date().getFullYear());
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchMasters();
-            fetchMonthConfig();
-        }
-    }, [isOpen, currentMonth]);
-
     const fetchMonthConfig = async () => {
         try {
             const res = await fetch(`/api/admin/month-config?year=${currentYear}&month=${currentMonth}`);
@@ -110,42 +103,147 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
         } catch (e) { console.error(e); }
     };
 
-    const handleDeleteStaff = async (id: number) => {
-        if (!confirm('Удалить сотрудника?')) return;
-        try {
-            await fetch(`/api/admin/staff?id=${id}`, { method: 'DELETE' });
+    // Calendar State
+    const [calendarDate, setCalendarDate] = useState(new Date());
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchMasters();
+            fetchMonthConfig();
             fetchStaff();
-        } catch (e) { console.error(e); }
+            fetchShifts();
+        }
+    }, [isOpen, currentMonth]);
+
+    // Deletion fix: staff wasn't refreshing correctly or had relational issues
+    const handleDeleteStaff = async (id: number) => {
+        if (!confirm('Удалить сотрудника? (Все его смены также будут удалены)')) return;
+        try {
+            // Check if there are shifts first
+            const sRes = await fetch(`/api/admin/staff-shifts?staffId=${id}`);
+            const sData = await sRes.json();
+            if (sData.length > 0) {
+                if (!confirm(`У этого сотрудника ${sData.length} записей смен. Удалить всё?`)) return;
+                // Delete shifts first or handle in DB cascade (but let's do safe manual or assume cascade if DB set up)
+                for (const sh of sData) {
+                    await fetch(`/api/admin/staff-shifts?id=${sh.id}`, { method: 'DELETE' });
+                }
+            }
+
+            const res = await fetch(`/api/admin/staff?id=${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                alert('Сотрудник удален');
+                fetchStaff();
+                fetchShifts();
+            } else {
+                alert('Не удалось удалить сотрудника');
+            }
+        } catch (e) {
+            console.error(e);
+            alert('Ошибка при удалении');
+        }
     };
 
-    const handleAddShift = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!selectedStaffId) return;
+    const toggleShift = async (day: number) => {
+        if (!selectedStaffId) {
+            alert('Сначала выберите сотрудника в списке слева!');
+            return;
+        }
 
-        // Calculate hours roughly
-        const h1 = parseInt(shiftStart.split(':')[0]);
-        const m1 = parseInt(shiftStart.split(':')[1]);
-        const h2 = parseInt(shiftEnd.split(':')[0]);
-        const m2 = parseInt(shiftEnd.split(':')[1]);
-        const totalHours = (h2 + m2 / 60) - (h1 + m1 / 60);
+        const targetDate = new Date(currentYear, currentMonth - 1, day);
+        const dateStr = targetDate.toISOString().split('T')[0];
 
-        try {
-            const res = await fetch('/api/admin/staff-shifts', {
+        // Check if shift exists for THIS staff on THIS day
+        const existing = shifts.find(s =>
+            s.staffId === parseInt(selectedStaffId) &&
+            new Date(s.date).toISOString().split('T')[0] === dateStr
+        );
+
+        if (existing) {
+            if (existing.isPaid) {
+                alert('Эта смена уже оплачена. Удаление невозможно.');
+                return;
+            }
+            if (!confirm('Удалить запись об этом выходе?')) return;
+            await fetch(`/api/admin/staff-shifts?id=${existing.id}`, { method: 'DELETE' });
+        } else {
+            const s = staff.find(x => x.id === parseInt(selectedStaffId));
+            const perDay = s ? s.defaultRate / workingDays : 0;
+
+            await fetch('/api/admin/staff-shifts', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     staffId: selectedStaffId,
-                    date: shiftDate,
-                    startTime: shiftStart,
-                    endTime: shiftEnd,
-                    hours: totalHours,
-                    amount: shiftAmount || 0
+                    date: dateStr,
+                    startTime: '09:00',
+                    endTime: '18:00',
+                    hours: 9,
+                    amount: perDay || 0
                 })
             });
-            if (res.ok) {
-                fetchShifts();
-            }
-        } catch (e) { console.error(e); }
+        }
+        fetchShifts();
+    };
+
+    const getDaysInMonth = (year: number, month: number) => new Date(year, month, 0).getDate();
+
+    const renderCalendar = () => {
+        const days = getDaysInMonth(currentYear, currentMonth);
+        const elements = [];
+
+        for (let d = 1; d <= days; d++) {
+            const dateStr = new Date(currentYear, currentMonth - 1, d).toISOString().split('T')[0];
+
+            // Get all shifts for this day
+            const dayShifts = shifts.filter(s => new Date(s.date).toISOString().split('T')[0] === dateStr);
+
+            elements.push(
+                <div
+                    key={d}
+                    onClick={() => toggleShift(d)}
+                    style={{
+                        aspectRatio: '1',
+                        border: '1px solid var(--border-subtle)',
+                        borderRadius: '12px',
+                        padding: '0.5rem',
+                        position: 'relative',
+                        cursor: 'pointer',
+                        background: 'white',
+                        transition: 'all 0.2s',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '0.25rem',
+                        overflow: 'hidden'
+                    }}
+                    onMouseEnter={e => e.currentTarget.style.borderColor = 'var(--accent-primary)'}
+                    onMouseLeave={e => e.currentTarget.style.borderColor = 'var(--border-subtle)'}
+                >
+                    <span style={{ fontSize: '0.75rem', fontWeight: 'bold', color: 'gray' }}>{d}</span>
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2px', overflowY: 'auto' }}>
+                        {dayShifts.map(sh => (
+                            <div
+                                key={sh.id}
+                                style={{
+                                    fontSize: '0.65rem',
+                                    padding: '2px 4px',
+                                    borderRadius: '4px',
+                                    background: sh.isPaid ? '#22c55e' : '#f97316',
+                                    color: 'white',
+                                    whiteSpace: 'nowrap',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis'
+                                }}
+                                title={`${sh.staff?.name}: ${sh.amount}₴`}
+                            >
+                                {sh.staff?.name}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+        return elements;
     };
 
     const handlePayStaff = async (staffId: number, name: string, amount: number, ids: number[]) => {
@@ -377,15 +475,12 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                 <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
                     {activeTab === 'administration' && (
                         <div>
-                            {/* Monthly Config & Payouts */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(300px, 1fr) 2fr', gap: '2rem', marginBottom: '2rem' }}>
-
-                                {/* 1. Settings & Staff List */}
+                            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) 2fr', gap: '2rem', marginBottom: '2rem' }}>
+                                {/* Left: Settings & Staff */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                                    {/* Month Working Days */}
                                     <div className="glass-card" style={{ padding: '1.5rem' }}>
-                                        <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>📅 Рабочие дни в месяце</h3>
-                                        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                                        <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>📅 Рабочие дни</h3>
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
                                             <select value={currentMonth} onChange={e => setCurrentMonth(parseInt(e.target.value))} className="input" style={{ flex: 1 }}>
                                                 {Array.from({ length: 12 }).map((_, i) => (
                                                     <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('ru', { month: 'long' })}</option>
@@ -396,144 +491,92 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                         </div>
                                     </div>
 
-                                    {/* Staff Management */}
                                     <div className="glass-card" style={{ padding: '1.5rem' }}>
-                                        <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>👥 Управление персоналом</h3>
+                                        <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>👥 Управление штатом</h3>
                                         <form onSubmit={handleAddStaff} style={{ marginBottom: '1rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                                             <input placeholder="Имя сотрудника" value={newStaffName} onChange={e => setNewStaffName(e.target.value)} className="input" required />
-                                            <input type="number" placeholder="Ставка в месяц (грн)" value={newStaffRate} onChange={e => setNewStaffRate(e.target.value)} className="input" required />
-                                            <button type="submit" className="btn btn-primary">+ Добавить в штат</button>
+                                            <input type="number" placeholder="Ставка в месяц" value={newStaffRate} onChange={e => setNewStaffRate(e.target.value)} className="input" required />
+                                            <button type="submit" className="btn btn-primary">+ Добавить</button>
                                         </form>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                             {staff.map(s => (
-                                                <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.75rem', background: 'white', borderRadius: '12px', border: '1px solid var(--border-subtle)', alignItems: 'center' }}>
+                                                <div
+                                                    key={s.id}
+                                                    onClick={() => setSelectedStaffId(s.id.toString())}
+                                                    style={{
+                                                        display: 'flex', justifyContent: 'space-between', padding: '12px',
+                                                        background: selectedStaffId === s.id.toString() ? 'var(--accent-primary)' : 'white',
+                                                        color: selectedStaffId === s.id.toString() ? 'white' : 'inherit',
+                                                        borderRadius: '12px', border: '1px solid var(--border-subtle)', cursor: 'pointer',
+                                                        alignItems: 'center', transition: 'all 0.2s'
+                                                    }}
+                                                >
                                                     <div>
                                                         <div style={{ fontWeight: '600' }}>{s.name}</div>
-                                                        <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{s.defaultRate} грн/мес</div>
+                                                        <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{s.defaultRate} грн/мес</div>
                                                     </div>
-                                                    <button onClick={() => handleDeleteStaff(s.id)} style={{ color: '#ef4444', border: 'none', background: 'none', cursor: 'pointer' }}>🗑️</button>
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteStaff(s.id); }} style={{ background: 'none', border: 'none', color: selectedStaffId === s.id.toString() ? 'white' : '#ef4444', cursor: 'pointer', fontSize: '1.1rem' }}>🗑️</button>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                 </div>
 
-                                {/* 2. Shift Tracker & Payroll */}
+                                {/* Right: Calendar & Payouts */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                    {/* Payout Summary */}
                                     <div className="glass-card" style={{ padding: '1.5rem' }}>
-                                        <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>💰 Расчет и Выплата (за период)</h3>
-
-                                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', background: '#f8fafc', padding: '1rem', borderRadius: '12px' }}>
+                                        <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>💰 К выплате (неоплаченные)</h3>
+                                        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                                             <div style={{ flex: 1 }}>
-                                                <label style={{ fontSize: '0.75rem', color: 'gray' }}>С этой даты:</label>
+                                                <label style={{ fontSize: '0.75rem', color: 'gray' }}>С даты:</label>
                                                 <input type="date" value={salaryStart} onChange={e => setSalaryStart(e.target.value)} className="input" style={{ width: '100%' }} />
                                             </div>
                                             <div style={{ flex: 1 }}>
-                                                <label style={{ fontSize: '0.75rem', color: 'gray' }}>По эту дату:</label>
+                                                <label style={{ fontSize: '0.75rem', color: 'gray' }}>По дату:</label>
                                                 <input type="date" value={salaryEnd} onChange={e => setSalaryEnd(e.target.value)} className="input" style={{ width: '100%' }} />
                                             </div>
                                         </div>
-
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
                                             {staff.map(s => {
-                                                const unpaidShifts = shifts.filter(sh => {
+                                                const unpaid = shifts.filter(sh => {
                                                     const d = new Date(sh.date);
-                                                    const isStaff = sh.staffId === s.id;
-                                                    const isAfter = salaryStart ? d >= new Date(salaryStart) : true;
-                                                    const isBefore = salaryEnd ? d <= new Date(salaryEnd + 'T23:59:59') : true;
-                                                    return isStaff && !sh.isPaid && isAfter && isBefore;
+                                                    const isInRange = (!salaryStart || d >= new Date(salaryStart)) && (!salaryEnd || d <= new Date(salaryEnd + 'T23:59:59'));
+                                                    return sh.staffId === s.id && !sh.isPaid && isInRange;
                                                 });
-
-                                                const workedDaysCount = unpaidShifts.length;
-                                                const totalToPay = unpaidShifts.reduce((acc, sh) => acc + sh.amount, 0);
-
-                                                if (workedDaysCount === 0) return null;
-
+                                                const total = unpaid.reduce((acc, sh) => acc + sh.amount, 0);
+                                                if (total === 0) return null;
                                                 return (
                                                     <div key={s.id} style={{ padding: '1.25rem', borderRadius: '16px', border: '1px solid #bbf7d0', background: '#f0fdf4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                                         <div>
-                                                            <div style={{ fontWeight: '700', fontSize: '1.1rem' }}>{s.name}</div>
-                                                            <div style={{ color: '#166534', fontSize: '0.9rem' }}>
-                                                                Отработано: <b>{workedDaysCount} дн.</b><br />
-                                                                К выплате: <b style={{ fontSize: '1.2rem' }}>{totalToPay.toFixed(0)}₴</b>
-                                                            </div>
+                                                            <div style={{ fontWeight: '700' }}>{s.name}</div>
+                                                            <div style={{ color: '#166534' }}>{total.toFixed(0)}₴ ({unpaid.length} дн.)</div>
                                                         </div>
-                                                        <button onClick={() => handlePayStaff(s.id, s.name, totalToPay, unpaidShifts.map(u => u.id))} className="btn btn-primary">Выплатить</button>
+                                                        <button onClick={() => handlePayStaff(s.id, s.name, total, unpaid.map(u => u.id))} className="btn btn-primary">Выплатить</button>
                                                     </div>
                                                 );
                                             })}
                                         </div>
                                     </div>
 
-                                    {/* Quick Shift Entry */}
+                                    {/* Attendance Calendar */}
                                     <div className="glass-card" style={{ padding: '1.5rem' }}>
-                                        <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>✍️ Быстрая запись выхода</h3>
-                                        <form onSubmit={handleAddShift} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '1rem' }}>
-                                            <select className="input" value={selectedStaffId} onChange={e => {
-                                                setSelectedStaffId(e.target.value);
-                                                const s = staff.find(x => x.id === parseInt(e.target.value));
-                                                if (s) {
-                                                    const perDay = s.defaultRate / workingDays;
-                                                    setShiftAmount(perDay.toFixed(2));
-                                                }
-                                            }} required>
-                                                <option value="">Кто вышел?</option>
-                                                {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                                            </select>
-                                            <input type="date" value={shiftDate} onChange={e => setShiftDate(e.target.value)} className="input" required />
-                                            <input type="number" placeholder="Сумма за выход" value={shiftAmount} onChange={e => setShiftAmount(e.target.value)} className="input" required />
-                                            <button type="submit" className="btn btn-primary">Записать</button>
-                                        </form>
+                                        <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>🗓️ Календарь посещаемости {selectedStaffId && `- ${staff.find(x => x.id.toString() === selectedStaffId)?.name}`}</h3>
+                                        {!selectedStaffId && <p style={{ color: '#ef4444', fontWeight: '500' }}>⚠️ Выберите сотрудника в списке слева, чтобы отметить выход</p>}
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px' }}>
+                                            {renderCalendar()}
+                                        </div>
+                                        <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1.5rem', fontSize: '0.85rem', fontWeight: '500' }}>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <div style={{ width: '14px', height: '14px', background: '#f97316', borderRadius: '4px' }}></div> Записан
+                                            </div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                <div style={{ width: '14px', height: '14px', background: '#22c55e', borderRadius: '4px' }}></div> Выплачен
+                                            </div>
+                                            <div style={{ color: 'var(--text-secondary)', marginLeft: 'auto' }}>* Кликните на день, чтобы добавить/удалить смену выбранного сотрудника</div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-
-                            {/* Shift Log */}
-                            <h3 style={{ fontSize: '1.2rem', marginBottom: '1rem' }}>📜 Журнал выходов</h3>
-                            <div className="glass-card" style={{ overflow: 'hidden' }}>
-                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                    <thead style={{ background: '#f8fafc' }}>
-                                        <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border-subtle)' }}>
-                                            <th style={{ padding: '1rem' }}>Дата</th>
-                                            <th style={{ padding: '1rem' }}>Сотрудник</th>
-                                            <th style={{ padding: '1rem' }}>Начислено</th>
-                                            <th style={{ padding: '1rem' }}>Статус</th>
-                                            <th style={{ padding: '1rem' }}>Действие</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {shifts
-                                            .filter(x => {
-                                                const d = new Date(x.date);
-                                                const s = salaryStart ? d >= new Date(salaryStart) : true;
-                                                const e = salaryEnd ? d <= new Date(salaryEnd + 'T23:59:59') : true;
-                                                return s && e;
-                                            })
-                                            .map(sh => (
-                                                <tr key={sh.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                    <td style={{ padding: '1rem' }}>{new Date(sh.date).toLocaleDateString()}</td>
-                                                    <td style={{ padding: '1rem', fontWeight: '500' }}>{sh.staff?.name}</td>
-                                                    <td style={{ padding: '1rem' }}>{sh.amount.toFixed(0)} грн</td>
-                                                    <td style={{ padding: '1rem' }}>
-                                                        {sh.isPaid ?
-                                                            <span style={{ color: '#22c55e', background: '#f0fdf4', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', border: '1px solid #dcfce7' }}>Выплачено</span> :
-                                                            <span style={{ color: '#f59e0b', background: '#fffbeb', padding: '4px 10px', borderRadius: '20px', fontSize: '0.8rem', border: '1px solid #fef3c7' }}>В ожидании</span>
-                                                        }
-                                                    </td>
-                                                    <td style={{ padding: '1rem' }}>
-                                                        {!sh.isPaid && (
-                                                            <button onClick={async () => {
-                                                                if (confirm('Удалить запись?')) {
-                                                                    await fetch(`/api/admin/staff-shifts?id=${sh.id}`, { method: 'DELETE' });
-                                                                    fetchShifts();
-                                                                }
-                                                            }} style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.5 }}>🗑️</button>
-                                                        )}
-                                                    </td>
-                                                </tr>
-                                            ))}
-                                    </tbody>
-                                </table>
                             </div>
                         </div>
                     )}
