@@ -98,21 +98,15 @@ export async function POST(req: Request) {
             }
         }
 
-        // Генерация номера заказа (автоинкремент строки)
-        const lastOrder = await prisma.order.findFirst({
-            orderBy: {
-                id: 'desc',
-            },
-        });
+        // Robust Order Number Generation
+        const allOrders = await prisma.order.findMany({ select: { orderNumber: true } });
+        const maxVal = allOrders.reduce((max, curr) => {
+            const n = parseInt(curr.orderNumber, 10);
+            return isNaN(n) ? max : Math.max(max, n);
+        }, 0);
 
-        let nextNumber = 1;
-        if (lastOrder && lastOrder.orderNumber) {
-            const parsed = parseInt(lastOrder.orderNumber, 10);
-            if (!isNaN(parsed)) {
-                nextNumber = parsed + 1;
-            }
-        }
-        const orderNumber = nextNumber.toString();
+        const nextNumber = maxVal + 1;
+        const orderNumber = nextNumber.toString().padStart(6, '0');
 
         const newOrder = await prisma.order.create({
             data: {
