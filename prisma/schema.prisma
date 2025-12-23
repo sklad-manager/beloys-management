@@ -19,6 +19,27 @@ model Master {
   salaryLogs  SalaryLog[]
 }
 
+model Staff {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  role        String   @default("Администратор")
+  defaultRate Float    @default(0) // Default pay per shift or hour
+  shifts      StaffShift[]
+}
+
+model StaffShift {
+  id        Int      @id @default(autoincrement())
+  staffId   Int
+  staff     Staff    @relation(fields: [staffId], references: [id])
+  date      DateTime @default(now())
+  startTime String?  // e.g. "09:00"
+  endTime   String?  // e.g. "18:00"
+  hours     Float?
+  amount    Float    // Earned for this shift
+  isPaid    Boolean  @default(false)
+  paidAt    DateTime?
+}
+
 model ReferenceItem {
   id       Int    @id @default(autoincrement())
   type     String // "BRAND", "SHOE_TYPE", "COLOR", "SERVICE"

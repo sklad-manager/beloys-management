@@ -34,11 +34,108 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
     const [salaryStart, setSalaryStart] = useState('');
     const [salaryEnd, setSalaryEnd] = useState('');
 
+    // Administration State
+    const [staff, setStaff] = useState<any[]>([]);
+    const [shifts, setShifts] = useState<any[]>([]);
+    const [newStaffName, setNewStaffName] = useState('');
+    const [newStaffRate, setNewStaffRate] = useState('');
+
+    // Shift Form State
+    const [selectedStaffId, setSelectedStaffId] = useState('');
+    const [shiftDate, setShiftDate] = useState(new Date().toISOString().split('T')[0]);
+    const [shiftStart, setShiftStart] = useState('09:00');
+    const [shiftEnd, setShiftEnd] = useState('18:00');
+    const [shiftAmount, setShiftAmount] = useState('');
+
     useEffect(() => {
         if (isOpen) {
             fetchMasters();
         }
     }, [isOpen]);
+
+    const fetchStaff = async () => {
+        try {
+            const res = await fetch('/api/admin/staff');
+            if (res.ok) setStaff(await res.json());
+        } catch (e) { console.error(e); }
+    };
+
+    const fetchShifts = async () => {
+        try {
+            const res = await fetch('/api/admin/staff-shifts');
+            if (res.ok) setShifts(await res.json());
+        } catch (e) { console.error(e); }
+    };
+
+    const handleAddStaff = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/admin/staff', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newStaffName, defaultRate: newStaffRate })
+            });
+            if (res.ok) {
+                setNewStaffName('');
+                setNewStaffRate('');
+                fetchStaff();
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const handleDeleteStaff = async (id: number) => {
+        if (!confirm('Удалить сотрудника?')) return;
+        try {
+            await fetch(`/api/admin/staff?id=${id}`, { method: 'DELETE' });
+            fetchStaff();
+        } catch (e) { console.error(e); }
+    };
+
+    const handleAddShift = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedStaffId) return;
+
+        // Calculate hours roughly
+        const h1 = parseInt(shiftStart.split(':')[0]);
+        const m1 = parseInt(shiftStart.split(':')[1]);
+        const h2 = parseInt(shiftEnd.split(':')[0]);
+        const m2 = parseInt(shiftEnd.split(':')[1]);
+        const totalHours = (h2 + m2 / 60) - (h1 + m1 / 60);
+
+        try {
+            const res = await fetch('/api/admin/staff-shifts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    staffId: selectedStaffId,
+                    date: shiftDate,
+                    startTime: shiftStart,
+                    endTime: shiftEnd,
+                    hours: totalHours,
+                    amount: shiftAmount || 0
+                })
+            });
+            if (res.ok) {
+                setShiftAmount('');
+                fetchShifts();
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const handlePayStaff = async (staffId: number, name: string, amount: number, ids: number[]) => {
+        if (!confirm(`Выплатить ${amount} грн сотруднику ${name}?`)) return;
+        try {
+            const res = await fetch('/api/admin/staff-shifts', {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ shiftIds: ids, totalAmount: amount, staffName: name })
+            });
+            if (res.ok) {
+                alert('Выплата произведена');
+                fetchShifts();
+            }
+        } catch (e) { console.error(e); }
+    };
 
     const handlePaySalary = async (masterId: number, masterName: string, amount: number, logIds: number[]) => {
         if (amount <= 0) return;
@@ -244,6 +341,9 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                     <button style={tabStyle(activeTab === 'salaries')} onClick={() => { setActiveTab('salaries'); fetchSalaryLogs(); }}>
                         Зарплата
                     </button>
+                    <button style={tabStyle(activeTab === 'administration')} onClick={() => { setActiveTab('administration'); fetchStaff(); fetchShifts(); }}>
+                        Администрация
+                    </button>
                     <button style={tabStyle(activeTab === 'edits')} onClick={() => { setActiveTab('edits'); fetchEditLogs(); }}>
                         Редактируемые
                     </button>
@@ -253,6 +353,110 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                 </div>
 
                 <div style={{ flex: 1, overflowY: 'auto' }}>
+                    {activeTab === 'administration' && (
+                        <div>
+                            {/* Management Section */}
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '2rem', marginBottom: '2rem' }}>
+                                {/* Staff List */}
+                                <div style={{ background: 'var(--bg-primary)', padding: '1.5rem', borderRadius: '20px', border: '1px solid var(--border-subtle)' }}>
+                                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>👥 Сотрудники</h3>
+                                    <form onSubmit={handleAddStaff} style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
+                                        <input className="input" placeholder="Имя" value={newStaffName} onChange={e => setNewStaffName(e.target.value)} required />
+                                        <input className="input" type="number" placeholder="Ставка (грн)" value={newStaffRate} onChange={e => setNewStaffRate(e.target.value)} required />
+                                        <button className="btn btn-primary" type="submit">+ Добавить</button>
+                                    </form>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        {staff.map(s => (
+                                            <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', background: 'white', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid var(--border-subtle)', alignItems: 'center' }}>
+                                                <span>{s.name} ({s.defaultRate}₴)</span>
+                                                <button onClick={() => handleDeleteStaff(s.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>🗑️</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Shift Logging */}
+                                <div style={{ background: 'var(--bg-primary)', padding: '1.5rem', borderRadius: '20px', border: '1px solid var(--border-subtle)' }}>
+                                    <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>⏳ График и Зарплата</h3>
+                                    <form onSubmit={handleAddShift} style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+                                        <select className="input" value={selectedStaffId} onChange={e => {
+                                            setSelectedStaffId(e.target.value);
+                                            const s = staff.find(x => x.id === parseInt(e.target.value));
+                                            if (s) setShiftAmount(s.defaultRate.toString());
+                                        }} required>
+                                            <option value="">Выберите сотрудника</option>
+                                            {staff.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                                        </select>
+                                        <input className="input" type="date" value={shiftDate} onChange={e => setShiftDate(e.target.value)} required />
+                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                            <input className="input" type="time" value={shiftStart} onChange={e => setShiftStart(e.target.value)} />
+                                            <input className="input" type="time" value={shiftEnd} onChange={e => setShiftEnd(e.target.value)} />
+                                        </div>
+                                        <input className="input" type="number" placeholder="Сумма к начислению" value={shiftAmount} onChange={e => setShiftAmount(e.target.value)} required />
+                                        <button className="btn btn-primary" type="submit" style={{ gridColumn: 'span 2' }}>✓ Записать выход</button>
+                                    </form>
+
+                                    {/* Unpaid Summary */}
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+                                        {staff.map(s => {
+                                            const unpaid = shifts.filter(x => x.staffId === s.id && !x.isPaid);
+                                            const total = unpaid.reduce((acc, x) => acc + x.amount, 0);
+                                            if (total === 0) return null;
+                                            return (
+                                                <div key={s.id} style={{ background: '#f0fdf4', padding: '1rem', borderRadius: '16px', border: '1px solid #bbf7d0' }}>
+                                                    <div style={{ fontSize: '0.8rem', color: '#166534' }}>{s.name}</div>
+                                                    <div style={{ fontSize: '1.2rem', fontWeight: '800', margin: '4px 0' }}>{total} грн</div>
+                                                    <button onClick={() => handlePayStaff(s.id, s.name, total, unpaid.map(u => u.id))} className="btn btn-primary" style={{ width: '100%', padding: '0.4rem', fontSize: '0.8rem' }}>Выплатить</button>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Shift History */}
+                            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem', alignItems: 'center' }}>
+                                <label>Период истории:</label>
+                                <input type="date" value={salaryStart} onChange={e => setSalaryStart(e.target.value)} style={inputStyle} />
+                                <input type="date" value={salaryEnd} onChange={e => setSalaryEnd(e.target.value)} style={inputStyle} />
+                            </div>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', color: 'var(--text-secondary)' }}>
+                                <thead style={{ background: 'var(--bg-primary)' }}>
+                                    <tr style={{ textAlign: 'left', borderBottom: '1px solid var(--border-subtle)' }}>
+                                        <th style={{ padding: '1rem' }}>Дата</th>
+                                        <th style={{ padding: '1rem' }}>Сотрудник</th>
+                                        <th style={{ padding: '1rem' }}>Время</th>
+                                        <th style={{ padding: '1rem' }}>Сумма</th>
+                                        <th style={{ padding: '1rem' }}>Статус</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {shifts
+                                        .filter(x => {
+                                            const d = new Date(x.date);
+                                            const s = salaryStart ? d >= new Date(salaryStart) : true;
+                                            const e = salaryEnd ? d <= new Date(salaryEnd + 'T23:59:59') : true;
+                                            return s && e;
+                                        })
+                                        .map(sh => (
+                                            <tr key={sh.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                                                <td style={{ padding: '1rem' }}>{new Date(sh.date).toLocaleDateString()}</td>
+                                                <td style={{ padding: '1rem' }}>{sh.staff?.name}</td>
+                                                <td style={{ padding: '1rem' }}>{sh.startTime} - {sh.endTime} ({sh.hours?.toFixed(1)}ч)</td>
+                                                <td style={{ padding: '1rem', fontWeight: 'bold' }}>{sh.amount} грн</td>
+                                                <td style={{ padding: '1rem' }}>
+                                                    {sh.isPaid ?
+                                                        <span style={{ color: '#22c55e', fontSize: '0.8rem', background: '#f0fdf4', padding: '2px 8px', borderRadius: '10px' }}>Оплачено</span> :
+                                                        <span style={{ color: '#f59e0b', fontSize: '0.8rem', background: '#fffbeb', padding: '2px 8px', borderRadius: '10px' }}>Ожидает</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
                     {activeTab === 'masters' && (
                         <div>
                             <form onSubmit={handleAddMaster} style={{ display: 'flex', marginBottom: '1.5rem', background: 'var(--bg-primary)', padding: '1rem', borderRadius: '16px', border: '1px solid var(--border-subtle)' }}>
