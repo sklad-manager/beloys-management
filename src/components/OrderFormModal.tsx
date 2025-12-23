@@ -8,9 +8,10 @@ interface OrderFormModalProps {
     onClose: () => void;
     onSubmit: (data: any) => void;
     orderId?: number | null;
+    isReadOnly?: boolean;
 }
 
-export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: OrderFormModalProps) {
+export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId, isReadOnly = false }: OrderFormModalProps) {
     const [formData, setFormData] = useState({
         clientName: '',
         phone: '',
@@ -60,6 +61,10 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
 
     const [loading, setLoading] = useState(false);
     const [orderNumber, setOrderNumber] = useState<string | null>(null);
+
+    // Secondary View Only Modal state
+    const [viewOnlyOrderId, setViewOnlyOrderId] = useState<number | null>(null);
+    const [isViewOnlyOpen, setIsViewOnlyOpen] = useState(false);
 
     const fetchOrderDetails = async (id: number) => {
         setLoading(true);
@@ -548,7 +553,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                     margin: '0 auto 3rem auto'
                 }}>
                     <h2 style={{ fontSize: '2.2rem', color: 'var(--text-primary)', fontWeight: '800', margin: 0 }}>
-                        {orderId ? `Заказ #${orderNumber}` : 'Новый Заказ'}
+                        {isReadOnly ? `Просмотр Заказа #${orderNumber}` : (orderId ? `Редактирование #${orderNumber}` : 'Новый Заказ')}
                     </h2>
                     <button
                         onClick={onClose}
@@ -586,6 +591,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                             value={formData.clientName}
                                             onChange={handleClientNameChange}
                                             autoComplete="off"
+                                            disabled={isReadOnly}
                                         />
                                         {foundClient && (
                                             <button
@@ -655,6 +661,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                         value={formData.phone}
                                         onChange={handlePhoneChange}
                                         autoComplete="off"
+                                        disabled={isReadOnly}
                                     />
                                 </div>
                             </div>
@@ -670,6 +677,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                         value={formData.shoeType}
                                         onChange={handleShoeTypeChange}
                                         onFocus={() => {
+                                            if (isReadOnly) return;
                                             const filtered = formData.shoeType
                                                 ? shoeTypeSuggestions.filter(item => item.toLowerCase().includes(formData.shoeType.toLowerCase()))
                                                 : shoeTypeSuggestions;
@@ -678,6 +686,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                         }}
                                         onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                                         autoComplete="off"
+                                        disabled={isReadOnly}
                                     />
                                     {showSuggestions && filteredSuggestions.length > 0 && (
                                         <ul style={{
@@ -725,6 +734,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                         value={formData.brand}
                                         onChange={handleBrandChange}
                                         onFocus={() => {
+                                            if (isReadOnly) return;
                                             const filtered = formData.brand
                                                 ? brandSuggestions.filter(item => item.toLowerCase().includes(formData.brand.toLowerCase()))
                                                 : brandSuggestions;
@@ -733,6 +743,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                         }}
                                         onBlur={() => setTimeout(() => setShowBrandSuggestions(false), 200)}
                                         autoComplete="off"
+                                        disabled={isReadOnly}
                                     />
                                     {showBrandSuggestions && filteredBrandSuggestions.length > 0 && (
                                         <ul style={{
@@ -784,6 +795,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                         value={formData.color}
                                         onChange={handleColorChange}
                                         onFocus={() => {
+                                            if (isReadOnly) return;
                                             const filtered = formData.color
                                                 ? colorSuggestions.filter(item => item.toLowerCase().includes(formData.color.toLowerCase()))
                                                 : colorSuggestions;
@@ -792,6 +804,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                         }}
                                         onBlur={() => setTimeout(() => setShowColorSuggestions(false), 200)}
                                         autoComplete="off"
+                                        disabled={isReadOnly}
                                     />
                                     {showColorSuggestions && filteredColorSuggestions.length > 0 && (
                                         <ul style={{
@@ -839,6 +852,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                         defaultValue="1"
                                         style={inputStyle}
                                         onChange={handleChange}
+                                        disabled={isReadOnly}
                                     />
                                 </div>
                             </div>
@@ -862,6 +876,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                                 value={item.value}
                                                 onChange={(e) => handleServiceChange(index, e.target.value)}
                                                 onFocus={() => {
+                                                    if (isReadOnly) return;
                                                     const filtered = item.value
                                                         ? serviceSuggestions.filter(s => s.toLowerCase().includes(item.value.toLowerCase()))
                                                         : serviceSuggestions;
@@ -870,6 +885,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                                 }}
                                                 onBlur={() => setTimeout(() => setActiveServiceIndex(null), 200)}
                                                 autoComplete="off"
+                                                disabled={isReadOnly}
                                             />
                                             {activeServiceIndex === index && filteredServiceSuggestions.length > 0 && (
                                                 <ul className="suggestions-dropdown">
@@ -910,6 +926,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                                         value={item.masterName}
                                                         onChange={(e) => handleServiceMasterChange(index, e.target.value)}
                                                         onFocus={() => {
+                                                            if (isReadOnly) return;
                                                             const filtered = item.masterName
                                                                 ? masters.filter(m => m.name.toLowerCase().includes(item.masterName.toLowerCase()))
                                                                 : masters;
@@ -918,6 +935,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                                         }}
                                                         onBlur={() => setTimeout(() => setActiveMasterIndex(null), 200)}
                                                         autoComplete="off"
+                                                        disabled={isReadOnly}
                                                     />
                                                 );
                                             })()}
@@ -938,10 +956,11 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                                 style={{ ...inputStyle, marginBottom: 0, fontSize: '0.9rem', padding: '0.75rem 0.5rem' }}
                                                 value={item.price}
                                                 onChange={(e) => handleServicePriceChange(index, e.target.value)}
+                                                disabled={isReadOnly}
                                             />
                                         </div>
 
-                                        {serviceItems.length > 1 ? (
+                                        {serviceItems.length > 1 && !isReadOnly ? (
                                             <button
                                                 type="button"
                                                 onClick={() => removeServiceField(index)}
@@ -961,14 +980,16 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                         ) : <div />}
                                     </div>
                                 ))}
-                                <button
-                                    type="button"
-                                    onClick={addServiceField}
-                                    className="btn btn-glass"
-                                    style={{ width: '100%', marginTop: '0.5rem', fontSize: '0.9rem', borderRadius: '10px' }}
-                                >
-                                    + Добавить услугу
-                                </button>
+                                {!isReadOnly && (
+                                    <button
+                                        type="button"
+                                        onClick={addServiceField}
+                                        className="btn btn-glass"
+                                        style={{ width: '100%', marginTop: '0.5rem', fontSize: '0.9rem', borderRadius: '10px' }}
+                                    >
+                                        + Добавить услугу
+                                    </button>
+                                )}
                             </div>
 
 
@@ -981,6 +1002,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                     style={inputStyle}
                                     value={formData.comment}
                                     onChange={handleChange}
+                                    disabled={isReadOnly}
                                 />
                             </div>
                         </div>
@@ -1019,6 +1041,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                         }}
                                         onChange={handleChange}
                                         value={formData.price}
+                                        disabled={isReadOnly}
                                     />
                                     <span style={{
                                         position: 'absolute',
@@ -1042,6 +1065,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                         style={{ ...inputStyle, fontSize: '1.2rem', fontWeight: '600', paddingRight: '3.5rem' }}
                                         onChange={handleChange}
                                         value={formData.prepayment}
+                                        disabled={isReadOnly}
                                     />
                                     <span style={{
                                         position: 'absolute',
@@ -1061,6 +1085,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                                     style={{ ...inputStyle, appearance: 'none', background: 'white url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'24\' height=\'24\' viewBox=\'0 0 24 24\' fill=\'none\' stroke=\'currentColor\' stroke-width=\'2\' stroke-linecap=\'round\' stroke-linejoin=\'round\'%3E%3Cpolyline points=\'6 9 12 15 18 9\'%3E%3C/polyline%3E%3C/svg%3E") no-repeat right 1rem center' }}
                                     onChange={handleChange}
                                     value={formData.paymentMethod}
+                                    disabled={isReadOnly}
                                 >
                                     <option value="Cash">💵 Наличные</option>
                                     <option value="Terminal">💳 Карта / Терминал</option>
@@ -1082,28 +1107,41 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: 'auto' }}>
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="btn btn-primary"
-                                    style={{
-                                        width: '100%',
-                                        padding: '1.1rem',
-                                        fontSize: '1.1rem',
-                                        fontWeight: '700',
-                                        boxShadow: 'var(--accent-glow)'
-                                    }}
-                                >
-                                    {loading ? 'Обработка...' : (orderId ? 'Сохранить Изменения' : 'Создать Заказ')}
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={onClose}
-                                    className="btn btn-glass"
-                                    style={{ width: '100%', padding: '0.75rem' }}
-                                >
-                                    Отмена
-                                </button>
+                                {!isReadOnly ? (
+                                    <>
+                                        <button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="btn btn-primary"
+                                            style={{
+                                                width: '100%',
+                                                padding: '1.1rem',
+                                                fontSize: '1.1rem',
+                                                fontWeight: '700',
+                                                boxShadow: 'var(--accent-glow)'
+                                            }}
+                                        >
+                                            {loading ? 'Обработка...' : (orderId ? 'Сохранить Изменения' : 'Создать Заказ')}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={onClose}
+                                            className="btn btn-glass"
+                                            style={{ width: '100%', padding: '0.75rem' }}
+                                        >
+                                            Отмена
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button
+                                        type="button"
+                                        onClick={onClose}
+                                        className="btn btn-primary"
+                                        style={{ width: '100%', padding: '1.1rem', fontWeight: '700' }}
+                                    >
+                                        Закрыть
+                                    </button>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -1112,7 +1150,25 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId }: O
                     isOpen={isClientModalOpen}
                     onClose={() => setIsClientModalOpen(false)}
                     clientId={foundClient?.id || null}
+                    onViewOrder={(id) => {
+                        setViewOnlyOrderId(id);
+                        setIsViewOnlyOpen(true);
+                    }}
                 />
+
+                {/* Secondary modal for viewing old orders from history */}
+                {isViewOnlyOpen && (
+                    <OrderFormModal
+                        isOpen={isViewOnlyOpen}
+                        onClose={() => {
+                            setIsViewOnlyOpen(false);
+                            setViewOnlyOrderId(null);
+                        }}
+                        onSubmit={() => { }} // No-op for read-only
+                        orderId={viewOnlyOrderId}
+                        isReadOnly={true}
+                    />
+                )}
             </div>
         </div>
     );

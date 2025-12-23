@@ -35,6 +35,7 @@ export default function Home() {
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
+  const [isReadOnly, setIsReadOnly] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecking, setAuthChecking] = useState(true);
@@ -196,6 +197,7 @@ export default function Home() {
             onClick={() => {
               if (selectedOrderId) {
                 setEditingOrderId(selectedOrderId);
+                setIsReadOnly(true);
                 setIsModalOpen(true);
               }
             }}
@@ -227,7 +229,11 @@ export default function Home() {
             🔒 Админ
           </button>
           <button
-            onClick={() => setIsModalOpen(true)}
+            onClick={() => {
+              setEditingOrderId(null);
+              setIsReadOnly(false);
+              setIsModalOpen(true);
+            }}
             className="btn btn-primary"
           >
             + Принять Заказ
@@ -315,9 +321,11 @@ export default function Home() {
         onClose={() => {
           setIsModalOpen(false);
           setEditingOrderId(null);
+          setIsReadOnly(false);
         }}
         onSubmit={handleCreateOrder}
         orderId={editingOrderId}
+        isReadOnly={isReadOnly}
       />
 
       <CashModal

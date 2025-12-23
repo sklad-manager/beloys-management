@@ -8,9 +8,12 @@ interface ClientCardModalProps {
 
 interface OrderHistoryItem {
     id: number;
+    orderNumber: string;
     createdAt: string;
-    description: string;
     shoeType: string;
+    brand: string;
+    color: string;
+    services: string;
     price: number;
     status: string;
 }
@@ -23,7 +26,14 @@ interface ClientData {
     orders: OrderHistoryItem[];
 }
 
-export default function ClientCardModal({ isOpen, onClose, clientId }: ClientCardModalProps) {
+interface ClientCardModalProps {
+    isOpen: boolean;
+    onClose: () => void;
+    clientId: number | null;
+    onViewOrder?: (orderId: number) => void;
+}
+
+export default function ClientCardModal({ isOpen, onClose, clientId, onViewOrder }: ClientCardModalProps) {
     const [client, setClient] = useState<ClientData | null>(null);
     const [loading, setLoading] = useState(false);
     const [notes, setNotes] = useState('');
@@ -75,31 +85,25 @@ export default function ClientCardModal({ isOpen, onClose, clientId }: ClientCar
 
     if (!isOpen) return null;
 
-    const overlayStyle: React.CSSProperties = {
+    const fullscreenStyle: React.CSSProperties = {
         position: 'fixed',
         top: 0,
         left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.3)',
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: 'var(--bg-primary)',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-        backdropFilter: 'blur(8px)'
+        flexDirection: 'column',
+        zIndex: 1100,
+        color: 'var(--text-primary)',
+        overflowY: 'auto'
     };
 
-    const modalStyle: React.CSSProperties = {
-        backgroundColor: 'var(--bg-secondary)',
-        padding: '2rem',
-        borderRadius: '24px',
-        width: '90%',
-        maxWidth: '600px',
-        maxHeight: '90vh',
-        overflowY: 'auto',
-        color: 'var(--text-primary)',
-        boxShadow: 'var(--shadow-lg)',
-        border: '1px solid var(--border-highlight)'
+    const containerStyle: React.CSSProperties = {
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: '2rem 1rem'
     };
 
     const labelStyle: React.CSSProperties = {
@@ -124,72 +128,163 @@ export default function ClientCardModal({ isOpen, onClose, clientId }: ClientCar
     };
 
     return (
-        <div style={overlayStyle} onClick={onClose}>
-            <div style={modalStyle} onClick={e => e.stopPropagation()}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-                    <h2 style={{ margin: 0, fontSize: '1.5rem', color: 'var(--text-primary)' }}>Карточка Клиента</h2>
-                    <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-primary)', fontSize: '1.5rem', cursor: 'pointer' }}>×</button>
+        <div style={fullscreenStyle} onClick={onClose}>
+            <div style={containerStyle} onClick={e => e.stopPropagation()}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <h2 style={{ margin: 0, fontSize: '2rem', fontWeight: '800', color: 'var(--text-primary)' }}>Карточка Клиента</h2>
+                        {client && <span style={{ padding: '0.4rem 0.8rem', background: 'var(--accent-primary)', color: 'white', borderRadius: '30px', fontSize: '0.9rem', fontWeight: '600' }}>#{client.id}</span>}
+                    </div>
+                    <button
+                        onClick={onClose}
+                        className="btn btn-glass"
+                        style={{
+                            width: '45px',
+                            height: '45px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.2rem',
+                            padding: 0
+                        }}
+                    >✕</button>
                 </div>
 
                 {loading ? (
-                    <div style={{ textAlign: 'center', padding: '2rem' }}>Загрузка...</div>
+                    <div style={{ textAlign: 'center', padding: '5rem', fontSize: '1.2rem', color: 'var(--text-secondary)' }}>
+                        <div className="loader" style={{ marginBottom: '1rem' }}></div>
+                        Загрузка данных клиента...
+                    </div>
                 ) : client ? (
-                    <div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-                            <div>
-                                <span style={labelStyle}>Имя</span>
-                                <div style={{ fontSize: '1.25rem', fontWeight: '700' }}>{client.name}</div>
-                            </div>
-                            <div>
-                                <span style={labelStyle}>Телефон</span>
-                                <div style={{ fontSize: '1.25rem', color: 'var(--accent-primary)', fontWeight: '600' }}>{client.phone}</div>
-                            </div>
-                        </div>
-
-                        <div style={{ marginBottom: '1.5rem' }}>
-                            <label style={labelStyle}>Заметки</label>
-                            <textarea
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                style={{ ...inputStyle, minHeight: '80px', resize: 'vertical' }}
-                                placeholder="Особенности клиента..."
-                            />
-                            <button
-                                onClick={handleSaveNotes}
-                                disabled={savingNotes}
-                                className="btn btn-primary"
-                                style={{ width: '100%', padding: '0.75rem' }}
-                            >
-                                {savingNotes ? 'Сохранение...' : 'Сохранить заметку'}
-                            </button>
-                        </div>
-
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '3rem' }}>
+                        {/* Sidebar: Info and Notes */}
                         <div>
-                            <h3 style={{ borderBottom: '1px solid var(--border-subtle)', paddingBottom: '0.5rem', marginBottom: '1rem', color: 'var(--text-primary)' }}>История заказов</h3>
+                            <div style={{
+                                backgroundColor: 'var(--bg-secondary)',
+                                padding: '2rem',
+                                borderRadius: '24px',
+                                border: '1px solid var(--border-highlight)',
+                                boxShadow: 'var(--shadow-md)',
+                                marginBottom: '2rem'
+                            }}>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <span style={labelStyle}>Имя</span>
+                                    <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-primary)' }}>{client.name}</div>
+                                </div>
+                                <div style={{ marginBottom: '1.5rem' }}>
+                                    <span style={labelStyle}>Телефон</span>
+                                    <div style={{ fontSize: '1.5rem', color: 'var(--accent-primary)', fontWeight: '700' }}>{client.phone}</div>
+                                </div>
+
+                                <div style={{ marginTop: '2rem' }}>
+                                    <label style={labelStyle}>Заметки</label>
+                                    <textarea
+                                        value={notes}
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        style={{ ...inputStyle, minHeight: '120px', resize: 'vertical', border: '1px solid var(--border-subtle)' }}
+                                        placeholder="Особенности клиента, предпочтения..."
+                                    />
+                                    <button
+                                        onClick={handleSaveNotes}
+                                        disabled={savingNotes}
+                                        className="btn btn-primary"
+                                        style={{ width: '100%', padding: '1rem', fontWeight: '600' }}
+                                    >
+                                        {savingNotes ? 'Сохранение...' : 'Обновить заметку'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Main Content: History */}
+                        <div>
+                            <h3 style={{
+                                fontSize: '1.5rem',
+                                fontWeight: '700',
+                                marginBottom: '1.5rem',
+                                color: 'var(--text-primary)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '0.75rem'
+                            }}>
+                                🕒 История заказов
+                                <span style={{ fontSize: '1rem', fontWeight: '500', color: 'var(--text-secondary)', background: 'var(--bg-secondary)', padding: '0.2rem 0.6rem', borderRadius: '10px' }}>
+                                    {client.orders.length}
+                                </span>
+                            </h3>
+
                             {client.orders.length === 0 ? (
-                                <p style={{ color: 'var(--text-muted)' }}>Заказов пока нет</p>
+                                <div style={{
+                                    padding: '3rem',
+                                    textAlign: 'center',
+                                    backgroundColor: 'var(--bg-secondary)',
+                                    borderRadius: '24px',
+                                    border: '1px dashed var(--border-subtle)',
+                                    color: 'var(--text-muted)'
+                                }}>
+                                    Заказов пока нет
+                                </div>
                             ) : (
-                                <div style={{ display: 'grid', gap: '0.75rem' }}>
+                                <div style={{ display: 'grid', gap: '1rem' }}>
                                     {client.orders.map(order => (
-                                        <div key={order.id} style={{
-                                            padding: '1.25rem',
-                                            backgroundColor: 'white',
-                                            borderRadius: '16px',
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            alignItems: 'center',
-                                            border: '1px solid var(--border-subtle)',
-                                            boxShadow: 'var(--shadow-sm)'
-                                        }}>
-                                            <div>
-                                                <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
-                                                    {new Date(order.createdAt).toLocaleDateString('ru-RU')}
+                                        <div
+                                            key={order.id}
+                                            onClick={() => onViewOrder && onViewOrder(order.id)}
+                                            style={{
+                                                padding: '1.5rem',
+                                                backgroundColor: 'white',
+                                                borderRadius: '20px',
+                                                display: 'flex',
+                                                justifyContent: 'space-between',
+                                                alignItems: 'flex-start',
+                                                border: '1px solid var(--border-subtle)',
+                                                boxShadow: 'var(--shadow-sm)',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s ease'
+                                            }}
+                                            onMouseEnter={e => {
+                                                e.currentTarget.style.transform = 'translateY(-2px)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+                                                e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                                            }}
+                                            onMouseLeave={e => {
+                                                e.currentTarget.style.transform = 'translateY(0)';
+                                                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                                e.currentTarget.style.borderColor = 'var(--border-subtle)';
+                                            }}
+                                        >
+                                            <div style={{ flex: 1 }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                                                    <span style={{ fontWeight: '800', fontSize: '1.1rem', color: 'var(--text-primary)' }}>#{order.orderNumber}</span>
+                                                    <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                                                        {new Date(order.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                                    </span>
                                                 </div>
-                                                <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{order.shoeType}</div>
+                                                <div style={{ marginBottom: '0.5rem' }}>
+                                                    <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{order.shoeType}</span>
+                                                    {order.brand && <span style={{ color: 'var(--text-secondary)' }}> • {order.brand}</span>}
+                                                    {order.color && <span style={{ color: 'var(--text-secondary)' }}> • {order.color}</span>}
+                                                </div>
+                                                <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                                    {order.services}
+                                                </div>
                                             </div>
-                                            <div style={{ textAlign: 'right' }}>
-                                                <div style={{ fontWeight: '800', color: 'var(--accent-primary)', fontSize: '1.1rem' }}>{order.price} грн</div>
-                                                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>{order.status}</div>
+                                            <div style={{ textAlign: 'right', marginLeft: '2rem' }}>
+                                                <div style={{ fontWeight: '800', color: 'var(--accent-primary)', fontSize: '1.25rem', marginBottom: '0.4rem' }}>{order.price} грн</div>
+                                                <div style={{
+                                                    fontSize: '0.75rem',
+                                                    fontWeight: '700',
+                                                    textTransform: 'uppercase',
+                                                    letterSpacing: '0.05em',
+                                                    padding: '0.25rem 0.6rem',
+                                                    borderRadius: '8px',
+                                                    backgroundColor: order.status === 'Закрыт' ? '#e2e8f0' : order.status === 'Выполнен' ? '#dcfce7' : '#fef9c3',
+                                                    color: order.status === 'Закрыт' ? '#64748b' : order.status === 'Выполнен' ? '#166534' : '#854d0e',
+                                                    display: 'inline-block'
+                                                }}>
+                                                    {order.status}
+                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -198,7 +293,7 @@ export default function ClientCardModal({ isOpen, onClose, clientId }: ClientCar
                         </div>
                     </div>
                 ) : (
-                    <div style={{ color: '#ff6b6b' }}>Не удалось загрузить данные клиента</div>
+                    <div style={{ color: '#ff6b6b', textAlign: 'center', padding: '5rem' }}>Не удалось загрузить данные клиента</div>
                 )}
             </div>
         </div>
