@@ -35,9 +35,17 @@ model StaffShift {
   startTime String?  // e.g. "09:00"
   endTime   String?  // e.g. "18:00"
   hours     Float?
-  amount    Float    // Earned for this shift
+  amount    Float    // Earned for this shift (calculated as MonthlyRate / WorkingDaysInMonth)
   isPaid    Boolean  @default(false)
   paidAt    DateTime?
+}
+
+model MonthConfig {
+  id          Int      @id @default(autoincrement())
+  year        Int
+  month       Int
+  workingDays Int      // Total working days in this month
+  @@unique([year, month])
 }
 
 model ReferenceItem {
