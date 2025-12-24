@@ -108,6 +108,10 @@ p {
   color: transparent;
 }
 
+.relative {
+  position: relative;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
