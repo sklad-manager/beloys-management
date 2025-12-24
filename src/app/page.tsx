@@ -172,195 +172,203 @@ export default function Home() {
   }
 
   return (
-    <main className="container" style={{ padding: '2rem 1rem' }}>
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: '2rem',
-        flexWrap: 'wrap',
-        gap: '1rem'
-      }}>
-        <div>
-          <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Belous <span className="text-gradient">Management</span></h1>
-          <p>Панель управления заказами</p>
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
-          <div className="relative" style={{ marginRight: '0.5rem' }}>
-            <input
-              type="text"
-              placeholder="Поиск..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="input"
-              style={{ paddingLeft: '2.5rem', width: '220px' }}
-            />
-            <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+    <>
+      <div className="ambient-glow" />
+      <main className="full-container" style={{ height: '100vh', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1.25rem', overflow: 'hidden' }}>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '1rem'
+        }}>
+          <div>
+            <h1 style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>Belous <span className="text-gradient">Management</span></h1>
+            <p>Панель управления заказами</p>
           </div>
 
-          <button
-            onClick={() => {
-              if (selectedOrderId) {
-                setEditingOrderId(selectedOrderId);
-                setIsReadOnly(false); // Changed to false to allow editing as requested in previous steps
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+            <div className="relative" style={{ marginRight: '0.5rem' }}>
+              <input
+                type="text"
+                placeholder="Поиск по клиенту, телефону или номеру заказа..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="input"
+                style={{ paddingLeft: '2.5rem', width: '350px' }}
+              />
+              <span style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', opacity: 0.5 }}>🔍</span>
+            </div>
+
+            <button
+              onClick={() => {
+                if (selectedOrderId) {
+                  setEditingOrderId(selectedOrderId);
+                  setIsReadOnly(false); // Changed to false to allow editing as requested in previous steps
+                  setIsModalOpen(true);
+                }
+              }}
+              disabled={!selectedOrderId}
+              className="btn"
+              style={{
+                background: selectedOrderId ? 'var(--accent-primary)' : 'white',
+                opacity: selectedOrderId ? 1 : 0.8,
+                cursor: selectedOrderId ? 'pointer' : 'not-allowed',
+                border: '1px solid var(--border-subtle)',
+                color: selectedOrderId ? 'white' : 'var(--text-primary)',
+                transition: 'all 0.2s ease',
+                boxShadow: selectedOrderId ? 'var(--accent-glow)' : 'var(--shadow-sm)'
+              }}
+            >
+              👁️ Просмотр
+            </button>
+
+            <button
+              onClick={() => setIsCashModalOpen(true)}
+              className="btn btn-glass"
+            >
+              💰 Касса
+            </button>
+            <button
+              onClick={() => setIsAdminAuthOpen(true)}
+              className="btn btn-glass"
+            >
+              🔒 Админ
+            </button>
+            <button
+              onClick={() => {
+                setEditingOrderId(null);
+                setIsReadOnly(false);
                 setIsModalOpen(true);
-              }
-            }}
-            disabled={!selectedOrderId}
-            className="btn"
-            style={{
-              background: selectedOrderId ? 'var(--accent-primary)' : 'white',
-              opacity: selectedOrderId ? 1 : 0.8,
-              cursor: selectedOrderId ? 'pointer' : 'not-allowed',
-              border: '1px solid var(--border-subtle)',
-              color: selectedOrderId ? 'white' : 'var(--text-primary)',
-              transition: 'all 0.2s ease',
-              boxShadow: selectedOrderId ? 'var(--accent-glow)' : 'var(--shadow-sm)'
-            }}
-          >
-            👁️ Просмотр
-          </button>
-
-          <button
-            onClick={() => setIsCashModalOpen(true)}
-            className="btn btn-glass"
-          >
-            💰 Касса
-          </button>
-          <button
-            onClick={() => setIsAdminAuthOpen(true)}
-            className="btn btn-glass"
-          >
-            🔒 Админ
-          </button>
-          <button
-            onClick={() => {
-              setEditingOrderId(null);
-              setIsReadOnly(false);
-              setIsModalOpen(true);
-            }}
-            className="btn btn-primary"
-          >
-            + Принять Заказ
-          </button>
-          <ThreeDotsMenu onLogout={handleLogout} />
+              }}
+              className="btn btn-primary"
+            >
+              + Принять Заказ
+            </button>
+            <ThreeDotsMenu onLogout={handleLogout} />
+          </div>
         </div>
-      </div>
 
-      {
-        loading ? (
-          <div style={{ textAlign: 'center', color: 'gray' }}>Загрузка...</div>
-        ) : (
-          <div className="glass-card" style={{ padding: '0', overflow: 'hidden' }}>
-            <div style={{ overflowX: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '600px' }}>
-                <thead style={{ background: 'var(--bg-primary)' }}>
-                  <tr>
-                    <th style={{ padding: '1rem', textAlign: 'left' }}>№</th>
-                    <th style={{ padding: '1rem', textAlign: 'left' }}>Клиент</th>
-                    <th style={{ padding: '1rem', textAlign: 'left' }}>Изделие</th>
-                    <th style={{ padding: '1rem', textAlign: 'left' }}>Цена</th>
-                    <th style={{ padding: '1rem', textAlign: 'left' }}>Статус</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {orders.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'gray' }}>
-                        Заказов пока нет
-                      </td>
+        {
+          loading ? (
+            <div style={{ textAlign: 'center', color: 'gray', padding: '4rem' }}>Загрузка...</div>
+          ) : (
+            <div className="glass-card" style={{ padding: '0', overflow: 'hidden', flex: 1, display: 'flex', flexDirection: 'column', borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }}>
+              <div style={{ overflowY: 'auto', flex: 1 }}>
+                <table style={{ width: '100%', borderCollapse: 'separate', borderSpacing: 0, minWidth: '600px' }}>
+                  <thead style={{ position: 'sticky', top: 0, background: 'var(--bg-primary)', zIndex: 10 }}>
+                    <tr style={{ background: 'var(--bg-secondary)' }}>
+                      <th style={{ padding: '1.25rem 1.5rem', textAlign: 'left', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>№</th>
+                      <th style={{ padding: '1.25rem 1.5rem', textAlign: 'left', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Клиент</th>
+                      <th style={{ padding: '1.25rem 1.5rem', textAlign: 'left', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Изделие</th>
+                      <th style={{ padding: '1.25rem 1.5rem', textAlign: 'left', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Цена</th>
+                      <th style={{ padding: '1.25rem 1.5rem', textAlign: 'left', borderBottom: '1px solid var(--border-subtle)', color: 'var(--text-secondary)', fontWeight: '600', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Статус</th>
                     </tr>
-                  ) : (
-                    orders.map((order) => (
-                      <tr
-                        key={order.id}
-                        style={{
-                          borderTop: '1px solid var(--border-subtle)',
-                          cursor: 'pointer',
-                          background: selectedOrderId === order.id ? 'rgba(99, 102, 241, 0.05)' : 'transparent',
-                          borderLeft: selectedOrderId === order.id ? '4px solid var(--accent-primary)' : '4px solid transparent'
-                        }}
-                        className="hover:bg-black/5 transition-colors"
-                        onClick={() => setSelectedOrderId(order.id === selectedOrderId ? null : order.id)}
-                      >
-                        <td style={{ padding: '1rem', fontFamily: 'monospace' }}>#{order.orderNumber}</td>
-                        <td style={{ padding: '1rem' }}>
-                          <div style={{ fontWeight: '600' }}>{order.clientName}</div>
-                          <div style={{ fontSize: '0.8rem', color: 'gray' }}>{order.phone}</div>
-                        </td>
-                        <td style={{ padding: '1rem' }}>
-                          {order.shoeType} <span style={{ color: 'gray' }}>{order.brand}</span>
-                        </td>
-                        <td style={{ padding: '1rem' }}>{order.price} грн</td>
-                        <td style={{ padding: '1rem' }} onClick={(e) => e.stopPropagation()}>
-                          <StatusBadge
-                            status={order.status}
-                            orderId={order.id}
-                            onUpdate={() => fetchOrders(searchQuery)}
-                            totalPrice={order.price}
-                            prepayment={(order.prepaymentCash || 0) + (order.prepaymentTerminal || 0)}
-                            orderNumber={order.orderNumber}
-                            onRequestPayment={(id, num, remaining, prepay) => {
-                              setPaymentModalData({
-                                orderId: id,
-                                orderNumber: num,
-                                totalPrice: remaining + prepay,
-                                prepayment: prepay
-                              });
-                              setIsPaymentModalOpen(true);
-                            }}
-                          />
+                  </thead>
+                  <tbody>
+                    {orders.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} style={{ padding: '2rem', textAlign: 'center', color: 'gray' }}>
+                          Заказов пока нет
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      orders.map((order) => (
+                        <tr
+                          key={order.id}
+                          style={{
+                            borderTop: '1px solid var(--border-subtle)',
+                            cursor: 'pointer',
+                            background: selectedOrderId === order.id ? 'rgba(99, 102, 241, 0.05)' : 'transparent',
+                            borderLeft: selectedOrderId === order.id ? '4px solid var(--accent-primary)' : '4px solid transparent'
+                          }}
+                          className="table-row-hover transition-colors"
+                          onClick={() => setSelectedOrderId(order.id === selectedOrderId ? null : order.id)}
+                        >
+                          <td style={{ padding: '1rem 1.5rem', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>#{order.orderNumber}</td>
+                          <td style={{ padding: '1rem 1.5rem' }}>
+                            <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{order.clientName}</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{order.phone}</div>
+                          </td>
+                          <td style={{ padding: '1rem 1.5rem' }}>
+                            <div style={{ color: 'var(--text-primary)' }}>{order.shoeType}</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{order.brand}</div>
+                          </td>
+                          <td style={{ padding: '1rem 1.5rem', fontWeight: '600' }}>{order.price} грн</td>
+                          <td style={{ padding: '1rem 1.5rem' }} onClick={(e) => e.stopPropagation()}>
+                            <StatusBadge
+                              status={order.status}
+                              orderId={order.id}
+                              onUpdate={() => fetchOrders(searchQuery)}
+                              totalPrice={order.price}
+                              prepayment={(order.prepaymentCash || 0) + (order.prepaymentTerminal || 0)}
+                              orderNumber={order.orderNumber}
+                              onRequestPayment={(id, num, remaining, prepay) => {
+                                setPaymentModalData({
+                                  orderId: id,
+                                  orderNumber: num,
+                                  totalPrice: remaining + prepay,
+                                  prepayment: prepay
+                                });
+                                setIsPaymentModalOpen(true);
+                              }}
+                            />
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )
-      }
+          )
+        }
 
-      <OrderFormModal
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setEditingOrderId(null);
-          setIsReadOnly(false);
-        }}
-        onSubmit={handleCreateOrder}
-        orderId={editingOrderId}
-        isReadOnly={isReadOnly}
-      />
+        <OrderFormModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setEditingOrderId(null);
+            setIsReadOnly(false);
+          }}
+          onSubmit={handleCreateOrder}
+          orderId={editingOrderId}
+          isReadOnly={isReadOnly}
+        />
 
-      <CashModal
-        isOpen={isCashModalOpen}
-        onClose={() => setIsCashModalOpen(false)}
-      />
+        <CashModal
+          isOpen={isCashModalOpen}
+          onClose={() => setIsCashModalOpen(false)}
+        />
 
-      <AdminAuthModal
-        isOpen={isAdminAuthOpen}
-        onClose={() => setIsAdminAuthOpen(false)}
-        onSuccess={() => {
-          setIsAdminAuthOpen(false);
-          setIsAdminDashboardOpen(true);
-        }}
-      />
+        <AdminAuthModal
+          isOpen={isAdminAuthOpen}
+          onClose={() => setIsAdminAuthOpen(false)}
+          onSuccess={() => {
+            setIsAdminAuthOpen(false);
+            setIsAdminDashboardOpen(true);
+          }}
+        />
 
-      <AdminDashboardModal
-        isOpen={isAdminDashboardOpen}
-        onClose={() => setIsAdminDashboardOpen(false)}
-      />
+        <AdminDashboardModal
+          isOpen={isAdminDashboardOpen}
+          onClose={() => setIsAdminDashboardOpen(false)}
+        />
 
-      <OrderIssueModal
-        isOpen={isPaymentModalOpen}
-        onClose={() => setIsPaymentModalOpen(false)}
-        onConfirm={handlePaymentComplete}
-        totalPrice={paymentModalData.totalPrice}
-        prepayment={paymentModalData.prepayment}
-        orderNumber={paymentModalData.orderNumber}
-      />
-    </main >
+        <OrderIssueModal
+          isOpen={isPaymentModalOpen}
+          onClose={() => setIsPaymentModalOpen(false)}
+          onConfirm={handlePaymentComplete}
+          totalPrice={paymentModalData.totalPrice}
+          prepayment={paymentModalData.prepayment}
+          orderNumber={paymentModalData.orderNumber}
+        />
+      </main>
+      <style jsx>{`
+        .table-row-hover:hover {
+          background: rgba(0, 0, 0, 0.03) !important;
+        }
+      `}</style>
+    </>
   );
 }

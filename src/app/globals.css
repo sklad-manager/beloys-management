@@ -95,6 +95,12 @@ p {
   padding: 0 1.5rem;
 }
 
+.full-container {
+  width: 100%;
+  max-width: none;
+  padding: 0 1.5rem;
+}
+
 .text-gradient {
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   -webkit-background-clip: text;
