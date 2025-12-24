@@ -50,6 +50,15 @@ model MonthConfig {
   @@unique([year, month])
 }
 
+model FixedCost {
+  id        Int      @id @default(autoincrement())
+  category  String   // "Rent", "Electricity", etc.
+  amount    Float
+  year      Int
+  month     Int
+  @@unique([category, year, month])
+}
+
 model ReferenceItem {
   id       Int    @id @default(autoincrement())
   type     String // "BRAND", "SHOE_TYPE", "COLOR", "SERVICE"

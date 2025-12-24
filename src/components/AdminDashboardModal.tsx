@@ -54,6 +54,12 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
     const [startDay, setStartDay] = useState(-1); // -1 = auto
     const [daysInMonth, setDaysInMonth] = useState(0); // 0 = auto
 
+    // Cashflow State
+    const [cashflowData, setCashflowData] = useState<any>(null);
+    const [fixedCosts, setFixedCosts] = useState<any[]>([]);
+    const [newFixedCostCategory, setNewFixedCostCategory] = useState('');
+    const [newFixedCostAmount, setNewFixedCostAmount] = useState('');
+
     const fetchMonthConfig = async () => {
         try {
             const res = await fetch(`/api/admin/month-config?year=${currentYear}&month=${currentMonth}`);
@@ -62,6 +68,52 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                 setWorkingDays(data.workingDays);
                 setStartDay(data.startDay);
                 setDaysInMonth(data.daysInMonth);
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const fetchCashflow = async () => {
+        try {
+            const res = await fetch(`/api/admin/cashflow?year=${currentYear}&month=${currentMonth}`);
+            if (res.ok) setCashflowData(await res.json());
+        } catch (e) { console.error(e); }
+    };
+
+    const fetchFixedCosts = async () => {
+        try {
+            const res = await fetch(`/api/admin/fixed-costs?year=${currentYear}&month=${currentMonth}`);
+            if (res.ok) setFixedCosts(await res.json());
+        } catch (e) { console.error(e); }
+    };
+
+    const handleAddFixedCost = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/admin/fixed-costs', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    year: currentYear,
+                    month: currentMonth,
+                    category: newFixedCostCategory,
+                    amount: newFixedCostAmount
+                })
+            });
+            if (res.ok) {
+                setNewFixedCostCategory('');
+                setNewFixedCostAmount('');
+                fetchFixedCosts();
+                fetchCashflow();
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const handleDeleteFixedCost = async (id: number) => {
+        try {
+            const res = await fetch(`/api/admin/fixed-costs?id=${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchFixedCosts();
+                fetchCashflow();
             }
         } catch (e) { console.error(e); }
     };
@@ -116,8 +168,12 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
             fetchMonthConfig();
             fetchStaff();
             fetchShifts();
+            if (activeTab === 'cashflow') {
+                fetchCashflow();
+                fetchFixedCosts();
+            }
         }
-    }, [isOpen, currentMonth, currentYear]);
+    }, [isOpen, currentMonth, currentYear, activeTab]);
 
     // Deletion fix: staff wasn't refreshing correctly or had relational issues
     const handleDeleteStaff = async (id: number) => {
@@ -491,6 +547,7 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                     <button style={tabStyle(activeTab === 'masters')} onClick={() => setActiveTab('masters')}>Мастера</button>
                     <button style={tabStyle(activeTab === 'salaries')} onClick={() => { setActiveTab('salaries'); fetchSalaryLogs(); }}>Зарплаты</button>
                     <button style={tabStyle(activeTab === 'administration')} onClick={() => { setActiveTab('administration'); fetchStaff(); fetchShifts(); }}>Администрация</button>
+                    <button style={tabStyle(activeTab === 'cashflow')} onClick={() => { setActiveTab('cashflow'); fetchCashflow(); fetchFixedCosts(); }}>Кешфло</button>
                     <button style={tabStyle(activeTab === 'edits')} onClick={() => { setActiveTab('edits'); fetchEditLogs(); }}>Логи</button>
                     <button style={tabStyle(activeTab === 'archive')} onClick={() => { setActiveTab('archive'); fetchArchivedOrders(); }}>Архив</button>
                 </div>
@@ -499,6 +556,154 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
 
             <main style={mainStyle}>
                 <div style={{ animation: 'fadeIn 0.4s ease-out' }}>
+                    {activeTab === 'cashflow' && cashflowData && (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(350px, 1fr) 2fr', gap: '2rem' }}>
+                            {/* Left: Fixed Costs */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                <div className="glass-card" style={{ padding: '1.5rem' }}>
+                                    <h3 style={{ marginTop: 0 }}>📊 Плановые траты (ФИКС)</h3>
+                                    <form onSubmit={handleAddFixedCost} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                                        <select
+                                            value={newFixedCostCategory}
+                                            onChange={e => setNewFixedCostCategory(e.target.value)}
+                                            className="input"
+                                            required
+                                        >
+                                            <option value="">Выберите категорию</option>
+                                            <option value="Аренда">Аренда</option>
+                                            <option value="Свет">Свет</option>
+                                            <option value="Вода">Вода</option>
+                                            <option value="Интернет">Интернет</option>
+                                            <option value="Телефон">Телефон</option>
+                                            <option value="Топливо">Топливо</option>
+                                            <option value="Хоз. нужды">Хоз. нужды</option>
+                                            <option value="Маркетинг">Маркетинг</option>
+                                        </select>
+                                        <input
+                                            type="number"
+                                            placeholder="Сумма"
+                                            value={newFixedCostAmount}
+                                            onChange={e => setNewFixedCostAmount(e.target.value)}
+                                            className="input"
+                                            required
+                                        />
+                                        <button type="submit" className="btn btn-primary">+ Добавить в план</button>
+                                    </form>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                        {fixedCosts.map(c => (
+                                            <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px', background: 'white', borderRadius: '10px', border: '1px solid var(--border-subtle)' }}>
+                                                <span>{c.category}</span>
+                                                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                                                    <span style={{ fontWeight: 'bold' }}>{c.amount}₴</span>
+                                                    <button onClick={() => handleDeleteFixedCost(c.id)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer' }}>✕</button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        <div style={{ padding: '10px', borderTop: '2px solid var(--accent-primary)', marginTop: '10px', display: 'flex', justifyContent: 'space-between', fontWeight: 'bold' }}>
+                                            <span>ИТОГО ФИКС:</span>
+                                            <span>{cashflowData.expenses.fixed}₴</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Right: Analysis */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
+                                    <div className="glass-card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)' }}>
+                                        <h4 style={{ margin: 0, fontSize: '0.8rem', color: '#1e40af', textTransform: 'uppercase' }}>Принято заказов</h4>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '0.5rem 0' }}>{cashflowData.orders.totalSum}₴</div>
+                                        <div style={{ fontSize: '0.8rem', color: '#60a5fa' }}>{cashflowData.orders.totalCount} шт.</div>
+                                    </div>
+                                    <div className="glass-card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)' }}>
+                                        <h4 style={{ margin: 0, fontSize: '0.8rem', color: '#92400e', textTransform: 'uppercase' }}>Готово (не забрано)</h4>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '0.5rem 0' }}>{cashflowData.orders.readySum}₴</div>
+                                        <div style={{ fontSize: '0.8rem', color: '#fbbf24' }}>{cashflowData.orders.readyCount} шт.</div>
+                                    </div>
+                                    <div className="glass-card" style={{ padding: '1.5rem', background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)' }}>
+                                        <h4 style={{ margin: 0, fontSize: '0.8rem', color: '#166534', textTransform: 'uppercase' }}>Закрыто (Архив)</h4>
+                                        <div style={{ fontSize: '1.5rem', fontWeight: 'bold', margin: '0.5rem 0' }}>{cashflowData.orders.archivedSum}₴</div>
+                                        <div style={{ fontSize: '0.8rem', color: '#4ade80' }}>{cashflowData.orders.archivedCount} шт.</div>
+                                    </div>
+                                </div>
+
+                                <div className="glass-card" style={{ padding: '2rem' }}>
+                                    <h3 style={{ marginTop: 0 }}>📊 Финансовый результат</h3>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+                                        <div>
+                                            <h4 style={{ color: 'var(--text-secondary)' }}>Расходы текущие:</h4>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                    <span>ЗП Мастеров (начислено):</span>
+                                                    <span>{(cashflowData.salaries.masterPaid + cashflowData.salaries.masterDebt).toFixed(0)}₴</span>
+                                                </div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                    <span>ЗП Админ (начислено):</span>
+                                                    <span>{(cashflowData.salaries.staffPaid + cashflowData.salaries.staffDebt).toFixed(0)}₴</span>
+                                                </div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                    <span>Переменные траты:</span>
+                                                    <span>{cashflowData.expenses.actual}₴</span>
+                                                </div>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', color: '#ef4444', fontWeight: 'bold' }}>
+                                                    <span>ИТОГО РАСХОДОВ:</span>
+                                                    <span>{(cashflowData.salaries.masterPaid + cashflowData.salaries.masterDebt + cashflowData.salaries.staffPaid + cashflowData.salaries.staffDebt + cashflowData.expenses.actual + cashflowData.expenses.fixed).toFixed(0)}₴</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div style={{ background: '#f8fafc', padding: '1.5rem', borderRadius: '16px' }}>
+                                            <h4 style={{ margin: 0 }}>Окупаемость и прогноз</h4>
+                                            {(() => {
+                                                const totalCosts = cashflowData.salaries.masterPaid + cashflowData.salaries.masterDebt + cashflowData.salaries.staffPaid + cashflowData.salaries.staffDebt + cashflowData.expenses.actual + cashflowData.expenses.fixed;
+                                                const currentRevenue = cashflowData.orders.totalSum;
+                                                const profit = currentRevenue - totalCosts;
+
+                                                // ROI / Payback estimation
+                                                const today = new Date();
+                                                const daysPassed = (currentMonth === (today.getMonth() + 1)) ? today.getDate() : 30;
+                                                const dailyAvg = currentRevenue / daysPassed;
+                                                const breakEvenDay = Math.ceil(totalCosts / dailyAvg);
+                                                const projectedRevenue = dailyAvg * 30;
+                                                const projectedProfit = projectedRevenue - totalCosts;
+
+                                                return (
+                                                    <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                                        <div style={{ textAlign: 'center' }}>
+                                                            <div style={{ fontSize: '0.85rem', color: 'gray' }}>Текущая прибыль:</div>
+                                                            <div style={{ fontSize: '2rem', fontWeight: 'bold', color: profit >= 0 ? '#10b981' : '#ef4444' }}>
+                                                                {profit.toFixed(0)}₴
+                                                            </div>
+                                                        </div>
+
+                                                        <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '1rem' }}>
+                                                            <div style={{ marginBottom: '8px', fontSize: '0.9rem' }}>
+                                                                🎯 <b>Точка безубыточности:</b> {breakEvenDay > 31 ? 'В этом месяце не будет' : `${breakEvenDay}-е число`}
+                                                            </div>
+                                                            <div style={{ fontSize: '0.9rem' }}>
+                                                                📈 <b>Прогноз на конец месяца:</b> <span style={{ color: projectedProfit >= 0 ? '#059669' : '#b91c1c', fontWeight: 'bold' }}>{projectedProfit.toFixed(0)}₴</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div style={{ height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden', marginTop: '0.5rem' }}>
+                                                            <div style={{
+                                                                height: '100%',
+                                                                width: `${Math.min(100, (currentRevenue / totalCosts) * 100)}%`,
+                                                                background: currentRevenue >= totalCosts ? '#10b981' : '#f59e0b'
+                                                            }}></div>
+                                                        </div>
+                                                        <div style={{ fontSize: '0.7rem', textAlign: 'center', color: 'gray' }}>
+                                                            Прогресс окупаемости: {((currentRevenue / totalCosts) * 100).toFixed(1)}%
+                                                        </div>
+                                                    </div>
+                                                );
+                                            })()}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === 'administration' && (
                         <div>
                             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(320px, 1fr) 2fr', gap: '2rem', marginBottom: '2rem' }}>
