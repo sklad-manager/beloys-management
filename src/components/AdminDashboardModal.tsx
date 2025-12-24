@@ -148,19 +148,26 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
         }
     };
 
+    const getLocalISO = (date: string | Date) => {
+        const d = new Date(date);
+        if (isNaN(d.getTime())) return '';
+        const offset = d.getTimezoneOffset();
+        const localDate = new Date(d.getTime() - (offset * 60 * 1000));
+        return localDate.toISOString().split('T')[0];
+    };
+
     const toggleShift = async (day: number) => {
         if (!selectedStaffId) {
             alert('Сначала выберите сотрудника в списке слева!');
             return;
         }
 
-        const targetDate = new Date(currentYear, currentMonth - 1, day);
-        const dateStr = targetDate.toISOString().split('T')[0];
+        const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 
         // Check if shift exists for THIS staff on THIS day
         const existing = shifts.find(s =>
             s.staffId === parseInt(selectedStaffId) &&
-            new Date(s.date).toISOString().split('T')[0] === dateStr
+            getLocalISO(s.date) === dateStr
         );
 
         if (existing) {
@@ -212,10 +219,10 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
         }
 
         for (let d = 1; d <= days; d++) {
-            const dateStr = new Date(currentYear, currentMonth - 1, d).toISOString().split('T')[0];
+            const dateStr = `${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 
             // Get all shifts for this day
-            const dayShifts = shifts.filter(s => new Date(s.date).toISOString().split('T')[0] === dateStr);
+            const dayShifts = shifts.filter(s => getLocalISO(s.date) === dateStr);
 
             elements.push(
                 <div
@@ -601,7 +608,7 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
                                             {staff.map(s => {
                                                 const unpaid = shifts.filter(sh => {
-                                                    const dStr = new Date(sh.date).toISOString().split('T')[0];
+                                                    const dStr = getLocalISO(sh.date);
                                                     const isInRange = (!salaryStart || dStr >= salaryStart) && (!salaryEnd || dStr <= salaryEnd);
                                                     return sh.staffId === s.id && !sh.isPaid && isInRange;
                                                 });
@@ -717,7 +724,7 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                         const unpaidLogs = salaryLogs.filter(log => {
                                             const isMaster = log.masterId === m.id;
                                             const isUnpaid = !log.isPaid;
-                                            const logDateStr = new Date(log.date).toISOString().split('T')[0];
+                                            const logDateStr = getLocalISO(log.date);
                                             const isAfterStart = salaryStart ? logDateStr >= salaryStart : true;
                                             const isBeforeEnd = salaryEnd ? logDateStr <= salaryEnd : true;
                                             return isMaster && isUnpaid && isAfterStart && isBeforeEnd;
@@ -765,7 +772,7 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                 <tbody>
                                     {salaryLogs
                                         .filter(log => {
-                                            const logDateStr = new Date(log.date).toISOString().split('T')[0];
+                                            const logDateStr = getLocalISO(log.date);
                                             const isAfterStart = salaryStart ? logDateStr >= salaryStart : true;
                                             const isBeforeEnd = salaryEnd ? logDateStr <= salaryEnd : true;
                                             return isAfterStart && isBeforeEnd;
