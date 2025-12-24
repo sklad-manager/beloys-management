@@ -45,6 +45,8 @@ model MonthConfig {
   year        Int
   month       Int
   workingDays Int      // Total working days in this month
+  startDay    Int      @default(0) // 0=Mon, 1=Tue... 6=Sun
+  daysInMonth Int      @default(30)
   @@unique([year, month])
 }
 

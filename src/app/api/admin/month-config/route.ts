@@ -19,15 +19,19 @@ export async function GET(req: Request) {
                 }
             }
         });
-        return NextResponse.json({ workingDays: config?.workingDays || 22 });
+        return NextResponse.json({
+            workingDays: config?.workingDays || 22,
+            startDay: config?.startDay ?? -1, // -1 means "auto"
+            daysInMonth: config?.daysInMonth ?? 0 // 0 means "auto"
+        });
     } catch (error) {
-        return NextResponse.json({ workingDays: 22 });
+        return NextResponse.json({ workingDays: 22, startDay: -1, daysInMonth: 0 });
     }
 }
 
 export async function POST(req: Request) {
     try {
-        const { year, month, workingDays } = await req.json();
+        const { year, month, workingDays, startDay, daysInMonth } = await req.json();
         const config = await prisma.monthConfig.upsert({
             where: {
                 year_month: {
@@ -35,11 +39,17 @@ export async function POST(req: Request) {
                     month: parseInt(month)
                 }
             },
-            update: { workingDays: parseInt(workingDays) },
+            update: {
+                workingDays: parseInt(workingDays),
+                startDay: parseInt(startDay),
+                daysInMonth: parseInt(daysInMonth)
+            },
             create: {
                 year: parseInt(year),
                 month: parseInt(month),
-                workingDays: parseInt(workingDays)
+                workingDays: parseInt(workingDays),
+                startDay: parseInt(startDay),
+                daysInMonth: parseInt(daysInMonth)
             }
         });
         return NextResponse.json(config);

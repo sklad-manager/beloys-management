@@ -49,8 +49,10 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
 
     // Month Config
     const [workingDays, setWorkingDays] = useState(22);
-    const [currentYear] = useState(new Date().getFullYear());
+    const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
     const [currentMonth, setCurrentMonth] = useState(new Date().getMonth() + 1);
+    const [startDay, setStartDay] = useState(-1); // -1 = auto
+    const [daysInMonth, setDaysInMonth] = useState(0); // 0 = auto
 
     const fetchMonthConfig = async () => {
         try {
@@ -58,6 +60,8 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
             if (res.ok) {
                 const data = await res.json();
                 setWorkingDays(data.workingDays);
+                setStartDay(data.startDay);
+                setDaysInMonth(data.daysInMonth);
             }
         } catch (e) { console.error(e); }
     };
@@ -67,7 +71,7 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
             await fetch('/api/admin/month-config', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ year: currentYear, month: currentMonth, workingDays })
+                body: JSON.stringify({ year: currentYear, month: currentMonth, workingDays, startDay, daysInMonth })
             });
             alert('Сохранено');
         } catch (e) { console.error(e); }
@@ -113,7 +117,7 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
             fetchStaff();
             fetchShifts();
         }
-    }, [isOpen, currentMonth]);
+    }, [isOpen, currentMonth, currentYear]);
 
     // Deletion fix: staff wasn't refreshing correctly or had relational issues
     const handleDeleteStaff = async (id: number) => {
@@ -186,11 +190,26 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
         fetchShifts();
     };
 
-    const getDaysInMonth = (year: number, month: number) => new Date(year, month, 0).getDate();
+    const getDaysInMonth = (year: number, month: number) => {
+        if (daysInMonth > 0) return daysInMonth;
+        return new Date(year, month, 0).getDate();
+    };
 
     const renderCalendar = () => {
         const days = getDaysInMonth(currentYear, currentMonth);
         const elements = [];
+
+        // Add empty cells for start day offset
+        // 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
+        let offset = startDay;
+        if (offset === -1) {
+            const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay(); // 0 is Sun in JS
+            offset = firstDay === 0 ? 6 : firstDay - 1; // Convert to 0=Mon
+        }
+
+        for (let i = 0; i < offset; i++) {
+            elements.push(<div key={`empty-${i}`} style={{ aspectRatio: '1', border: '1px solid transparent' }}></div>);
+        }
 
         for (let d = 1; d <= days; d++) {
             const dateStr = new Date(currentYear, currentMonth - 1, d).toISOString().split('T')[0];
@@ -479,15 +498,57 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                 {/* Left: Settings & Staff */}
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                                     <div className="glass-card" style={{ padding: '1.5rem' }}>
-                                        <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>📅 Рабочие дни</h3>
-                                        <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                            <select value={currentMonth} onChange={e => setCurrentMonth(parseInt(e.target.value))} className="input" style={{ flex: 1 }}>
-                                                {Array.from({ length: 12 }).map((_, i) => (
-                                                    <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('ru', { month: 'long' })}</option>
-                                                ))}
-                                            </select>
-                                            <input type="number" value={workingDays} onChange={e => setWorkingDays(parseInt(e.target.value))} className="input" style={{ width: '80px' }} />
-                                            <button onClick={saveMonthConfig} className="btn btn-primary">✓</button>
+                                        <h3 style={{ marginTop: 0, fontSize: '1.1rem', marginBottom: '1rem' }}>📅 Настройка месяца</h3>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                                                <select value={currentMonth} onChange={e => setCurrentMonth(parseInt(e.target.value))} className="input" style={{ flex: 1 }}>
+                                                    {Array.from({ length: 12 }).map((_, i) => (
+                                                        <option key={i + 1} value={i + 1}>{new Date(2000, i).toLocaleString('ru', { month: 'long' })}</option>
+                                                    ))}
+                                                </select>
+                                                <input
+                                                    type="number"
+                                                    value={currentYear}
+                                                    onChange={e => setCurrentYear(parseInt(e.target.value))}
+                                                    className="input"
+                                                    style={{ width: '100px' }}
+                                                    placeholder="Год"
+                                                />
+                                            </div>
+
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                                <div>
+                                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Начало месяца</label>
+                                                    <select value={startDay} onChange={e => setStartDay(parseInt(e.target.value))} className="input">
+                                                        <option value={-1}>Авто (через дату)</option>
+                                                        <option value={0}>Понедельник</option>
+                                                        <option value={1}>Вторник</option>
+                                                        <option value={2}>Среда</option>
+                                                        <option value={3}>Четверг</option>
+                                                        <option value={4}>Пятница</option>
+                                                        <option value={5}>Суббота</option>
+                                                        <option value={6}>Воскресенье</option>
+                                                    </select>
+                                                </div>
+                                                <div>
+                                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Дней в месяце</label>
+                                                    <input
+                                                        type="number"
+                                                        value={daysInMonth || ''}
+                                                        onChange={e => setDaysInMonth(parseInt(e.target.value) || 0)}
+                                                        className="input"
+                                                        placeholder="Авто"
+                                                    />
+                                                </div>
+                                            </div>
+
+                                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end' }}>
+                                                <div style={{ flex: 1 }}>
+                                                    <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Раб. дней (для расчёта зп)</label>
+                                                    <input type="number" value={workingDays} onChange={e => setWorkingDays(parseInt(e.target.value))} className="input" style={{ width: '100%' }} />
+                                                </div>
+                                                <button onClick={saveMonthConfig} className="btn btn-primary" style={{ height: '45px' }}>Сохранить</button>
+                                            </div>
                                         </div>
                                     </div>
 
