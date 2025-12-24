@@ -540,8 +540,8 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
                                             {staff.map(s => {
                                                 const unpaid = shifts.filter(sh => {
-                                                    const d = new Date(sh.date);
-                                                    const isInRange = (!salaryStart || d >= new Date(salaryStart)) && (!salaryEnd || d <= new Date(salaryEnd + 'T23:59:59'));
+                                                    const dStr = new Date(sh.date).toISOString().split('T')[0];
+                                                    const isInRange = (!salaryStart || dStr >= salaryStart) && (!salaryEnd || dStr <= salaryEnd);
                                                     return sh.staffId === s.id && !sh.isPaid && isInRange;
                                                 });
                                                 const total = unpaid.reduce((acc, sh) => acc + sh.amount, 0);
@@ -656,9 +656,9 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                         const unpaidLogs = salaryLogs.filter(log => {
                                             const isMaster = log.masterId === m.id;
                                             const isUnpaid = !log.isPaid;
-                                            const logDate = new Date(log.date);
-                                            const isAfterStart = salaryStart ? logDate >= new Date(salaryStart) : true;
-                                            const isBeforeEnd = salaryEnd ? logDate <= new Date(salaryEnd + 'T23:59:59') : true;
+                                            const logDateStr = new Date(log.date).toISOString().split('T')[0];
+                                            const isAfterStart = salaryStart ? logDateStr >= salaryStart : true;
+                                            const isBeforeEnd = salaryEnd ? logDateStr <= salaryEnd : true;
                                             return isMaster && isUnpaid && isAfterStart && isBeforeEnd;
                                         });
 
@@ -704,9 +704,9 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                 <tbody>
                                     {salaryLogs
                                         .filter(log => {
-                                            const logDate = new Date(log.date);
-                                            const isAfterStart = salaryStart ? logDate >= new Date(salaryStart) : true;
-                                            const isBeforeEnd = salaryEnd ? logDate <= new Date(salaryEnd + 'T23:59:59') : true;
+                                            const logDateStr = new Date(log.date).toISOString().split('T')[0];
+                                            const isAfterStart = salaryStart ? logDateStr >= salaryStart : true;
+                                            const isBeforeEnd = salaryEnd ? logDateStr <= salaryEnd : true;
                                             return isAfterStart && isBeforeEnd;
                                         })
                                         .map((log) => (
