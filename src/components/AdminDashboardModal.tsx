@@ -632,6 +632,11 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                         <h3 style={{ marginTop: 0, fontSize: '1.1rem' }}>🗓️ Календарь посещаемости {selectedStaffId && `- ${staff.find(x => x.id.toString() === selectedStaffId)?.name}`}</h3>
                                         {!selectedStaffId && <p style={{ color: '#ef4444', fontWeight: '500' }}>⚠️ Выберите сотрудника в списке слева, чтобы отметить выход</p>}
                                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '10px' }}>
+                                            {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map(day => (
+                                                <div key={day} style={{ textAlign: 'center', fontSize: '0.85rem', fontWeight: 'bold', color: 'var(--text-secondary)', paddingBottom: '0.5rem' }}>
+                                                    {day}
+                                                </div>
+                                            ))}
                                             {renderCalendar()}
                                         </div>
                                         <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1.5rem', fontSize: '0.85rem', fontWeight: '500' }}>
