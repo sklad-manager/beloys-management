@@ -109,7 +109,7 @@ model Order {
   
   // Relations
   masterId        Int?
-  master          Master?  @relation(fields: [masterId], references: [id])
+  master          Master?  @relation(fields: [masterId], references: [id], onDelete: SetNull)
   
   status          String   @default("Принят в работу") // "Принят в работу", "Выполнен", "Закрыт"
   editCount       Int      @default(0)
@@ -134,8 +134,8 @@ model SalaryLog {
   isPaid      Boolean  @default(false)
   paidAt      DateTime?
   
-  masterId    Int
-  master      Master   @relation(fields: [masterId], references: [id])
+  masterId    Int?
+  master      Master?   @relation(fields: [masterId], references: [id], onDelete: SetNull)
   
   // Optional link to order if salary is per-order
   orderId     Int?

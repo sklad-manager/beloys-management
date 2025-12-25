@@ -58,13 +58,17 @@ export async function DELETE(request: Request) {
     try {
         const masterId = parseInt(id);
 
-        // Check if master has orders or salary logs
-        const ordersCount = await prisma.order.count({ where: { masterId } });
-        const logsCount = await prisma.salaryLog.count({ where: { masterId } });
+        // Check if master has ACTIVE orders (not archived)
+        const activeOrdersCount = await prisma.order.count({
+            where: {
+                masterId,
+                status: { not: 'Выдан' } // Archive is 'Выдан'
+            }
+        });
 
-        if (ordersCount > 0 || logsCount > 0) {
+        if (activeOrdersCount > 0) {
             return NextResponse.json({
-                error: `Нельзя удалить мастера, так как у него есть связанные данные (${ordersCount} заказов, ${logsCount} выплат). Сначала удалите или переместите эти данные.`
+                error: `Нельзя удалить мастера, так как у него есть активные заказы (${activeOrdersCount} шт.). Сначала завершите их или переназначьте другого мастера.`
             }, { status: 400 });
         }
 
@@ -78,7 +82,7 @@ export async function DELETE(request: Request) {
                 type: 'MASTER',
                 action: 'DELETE',
                 targetId: deleted.name,
-                details: `Мастер "${deleted.name}" удален`,
+                details: `Мастер "${deleted.name}" удален (все его заказы были в архиве)`,
                 oldData: JSON.stringify(deleted),
                 operator: 'Admin'
             }
