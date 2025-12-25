@@ -66,10 +66,20 @@ export async function DELETE(request: Request) {
             }
         });
 
-        if (activeOrdersCount > 0) {
-            return NextResponse.json({
-                error: `Нельзя удалить мастера, так как у него есть активные заказы (${activeOrdersCount} шт.). Сначала завершите их или переназначьте другого мастера.`
-            }, { status: 400 });
+        // Check for unpaid salary logs
+        const unpaidLogsCount = await prisma.salaryLog.count({
+            where: {
+                masterId,
+                isPaid: false
+            }
+        });
+
+        if (activeOrdersCount > 0 || unpaidLogsCount > 0) {
+            let errorMsg = 'Нельзя удалить мастера: ';
+            if (activeOrdersCount > 0) errorMsg += `есть активные заказы (${activeOrdersCount} шт.). `;
+            if (unpaidLogsCount > 0) errorMsg += `есть невыплаченная зарплата. `;
+
+            return NextResponse.json({ error: errorMsg }, { status: 400 });
         }
 
         const deleted = await prisma.master.delete({
