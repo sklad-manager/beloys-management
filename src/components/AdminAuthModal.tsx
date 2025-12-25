@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 interface AdminAuthModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSuccess: () => void;
+    onSuccess: (mode: 'admin' | 'secret') => void;
 }
 
 export default function AdminAuthModal({ isOpen, onClose, onSuccess }: AdminAuthModalProps) {
@@ -14,9 +14,13 @@ export default function AdminAuthModal({ isOpen, onClose, onSuccess }: AdminAuth
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        // Hardcoded password for now
+        // Hardcoded passwords
         if (password === '1234') {
-            onSuccess();
+            onSuccess('admin');
+            setPassword('');
+            setError('');
+        } else if (password === 'q1234') {
+            onSuccess('secret');
             setPassword('');
             setError('');
         } else {

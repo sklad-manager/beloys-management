@@ -8,6 +8,7 @@ import LoginPage from '@/components/LoginPage';
 import ThreeDotsMenu from '@/components/ThreeDotsMenu';
 import AdminAuthModal from '@/components/AdminAuthModal';
 import AdminDashboardModal from '@/components/AdminDashboardModal';
+import SecretAdminDashboardModal from '@/components/SecretAdminDashboardModal';
 import StatusBadge from '@/components/StatusBadge';
 import OrderIssueModal from '@/components/OrderIssueModal';
 
@@ -34,6 +35,7 @@ export default function Home() {
   const [isCashModalOpen, setIsCashModalOpen] = useState(false);
   const [isAdminAuthOpen, setIsAdminAuthOpen] = useState(false);
   const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
+  const [isSecretAdminOpen, setIsSecretAdminOpen] = useState(false);
   const [editingOrderId, setEditingOrderId] = useState<number | null>(null);
   const [isReadOnly, setIsReadOnly] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -344,15 +346,24 @@ export default function Home() {
         <AdminAuthModal
           isOpen={isAdminAuthOpen}
           onClose={() => setIsAdminAuthOpen(false)}
-          onSuccess={() => {
+          onSuccess={(mode) => {
             setIsAdminAuthOpen(false);
-            setIsAdminDashboardOpen(true);
+            if (mode === 'admin') {
+              setIsAdminDashboardOpen(true);
+            } else {
+              setIsSecretAdminOpen(true);
+            }
           }}
         />
 
         <AdminDashboardModal
           isOpen={isAdminDashboardOpen}
           onClose={() => setIsAdminDashboardOpen(false)}
+        />
+
+        <SecretAdminDashboardModal
+          isOpen={isSecretAdminOpen}
+          onClose={() => setIsSecretAdminOpen(false)}
         />
 
         <OrderIssueModal
