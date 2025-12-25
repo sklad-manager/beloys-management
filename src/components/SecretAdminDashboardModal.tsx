@@ -96,6 +96,22 @@ export default function SecretAdminDashboardModal({ isOpen, onClose }: SecretAdm
         } catch (e) { console.error(e); }
     };
 
+    const handleExportClients = async () => {
+        try {
+            const res = await fetch('/api/admin/export/clients');
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `clients_backup_${new Date().toLocaleDateString()}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }
+        } catch (e) { console.error(e); }
+    };
+
     const renderChanges = (log: SystemLog) => {
         if (log.type === 'ORDER' && log.oldData && log.newData) {
             const changes: string[] = [];
@@ -247,8 +263,13 @@ export default function SecretAdminDashboardModal({ isOpen, onClose }: SecretAdm
                                         <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💎</div>
                                         <h3 style={{ margin: '0 0 0.5rem 0' }}>Beloys VIP</h3>
                                         <p style={{ color: '#94a3b8', fontSize: '0.9rem', marginBottom: '1.5rem' }}>Доступ ко всем секретным функциям разблокирован</p>
-                                        <button style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: 'none', background: 'linear-gradient(to right, #6366f1, #a855f7)', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
-                                            Скачать отчет (PDF)
+                                        <button
+                                            onClick={handleExportClients}
+                                            style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: 'none', background: 'linear-gradient(to right, #6366f1, #a855f7)', color: 'white', fontWeight: 'bold', cursor: 'pointer', marginBottom: '10px' }}>
+                                            💾 Экспорт базы клиентов (CSV)
+                                        </button>
+                                        <button style={{ width: '100%', padding: '1rem', borderRadius: '12px', border: '1px solid #334155', background: 'rgba(255,255,255,0.05)', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
+                                            📄 Скачать отчет (PDF)
                                         </button>
                                     </div>
                                 </div>
