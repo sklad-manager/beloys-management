@@ -56,8 +56,20 @@ export async function DELETE(request: Request) {
     }
 
     try {
+        const masterId = parseInt(id);
+
+        // Check if master has orders or salary logs
+        const ordersCount = await prisma.order.count({ where: { masterId } });
+        const logsCount = await prisma.salaryLog.count({ where: { masterId } });
+
+        if (ordersCount > 0 || logsCount > 0) {
+            return NextResponse.json({
+                error: `Нельзя удалить мастера, так как у него есть связанные данные (${ordersCount} заказов, ${logsCount} выплат). Сначала удалите или переместите эти данные.`
+            }, { status: 400 });
+        }
+
         const deleted = await prisma.master.delete({
-            where: { id: parseInt(id) }
+            where: { id: masterId }
         });
 
         // Log the deletion
@@ -73,7 +85,8 @@ export async function DELETE(request: Request) {
         });
 
         return NextResponse.json({ success: true });
-    } catch (error) {
-        return NextResponse.json({ error: 'Failed to delete master' }, { status: 500 });
+    } catch (error: any) {
+        console.error('Delete master error:', error);
+        return NextResponse.json({ error: 'Ошибка при удалении мастера: ' + (error.message || 'Неизвестная ошибка') }, { status: 500 });
     }
 }

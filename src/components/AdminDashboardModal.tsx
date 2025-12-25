@@ -372,9 +372,13 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
             });
             if (res.ok) {
                 fetchMasters();
+            } else {
+                const error = await res.json();
+                alert(error.error || 'Ошибка при удалении мастера');
             }
         } catch (e) {
             console.error(e);
+            alert('Произошла ошибка при связи с сервером');
         }
     };
 
