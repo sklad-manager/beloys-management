@@ -132,6 +132,18 @@ export async function POST(req: Request) {
             },
         });
 
+        // Log the creation
+        await prisma.systemLog.create({
+            data: {
+                type: 'ORDER',
+                action: 'CREATE',
+                targetId: orderNumber,
+                details: `Создан новый заказ #${orderNumber} (${clientName})`,
+                newData: JSON.stringify(newOrder),
+                operator: 'Admin'
+            }
+        });
+
         return NextResponse.json(newOrder);
     } catch (error: any) {
         console.error('API Error:', error);

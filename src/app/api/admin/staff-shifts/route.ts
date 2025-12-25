@@ -77,6 +77,18 @@ export async function PATCH(req: Request) {
             }
         });
 
+        // Log the payment
+        await prisma.systemLog.create({
+            data: {
+                type: 'SALARY',
+                action: 'PAYMENT',
+                targetId: staffName,
+                details: `Выплачена зарплата администратору ${staffName}: ${totalAmount}₴`,
+                newData: JSON.stringify({ shiftIds, totalAmount, staffName }),
+                operator: 'Admin'
+            }
+        });
+
         return NextResponse.json({ success: true });
     } catch (error) {
         return NextResponse.json({ error: 'Failed to pay' }, { status: 500 });

@@ -5,18 +5,22 @@ interface SecretAdminDashboardModalProps {
     onClose: () => void;
 }
 
-interface EditLog {
+interface SystemLog {
     id: number;
-    orderNumber: string;
+    type: string;
+    action: string;
+    targetId: string;
+    details: string;
     oldData: any;
     newData: any;
+    operator: string;
     date: string;
 }
 
 export default function SecretAdminDashboardModal({ isOpen, onClose }: SecretAdminDashboardModalProps) {
     const [activeTab, setActiveTab] = useState('general');
     const [stats, setStats] = useState<any>(null);
-    const [editLogs, setEditLogs] = useState<EditLog[]>([]);
+    const [systemLogs, setSystemLogs] = useState<SystemLog[]>([]);
     const [fixedCosts, setFixedCosts] = useState<any[]>([]);
 
     // Cashflow Filter
@@ -41,10 +45,10 @@ export default function SecretAdminDashboardModal({ isOpen, onClose }: SecretAdm
         } catch (e) { console.error(e); }
     };
 
-    const fetchEditLogs = async () => {
+    const fetchSystemLogs = async () => {
         try {
-            const res = await fetch('/api/admin/edit-logs');
-            if (res.ok) setEditLogs(await res.json());
+            const res = await fetch('/api/admin/system-logs');
+            if (res.ok) setSystemLogs(await res.json());
         } catch (e) { console.error(e); }
     };
 
@@ -55,7 +59,7 @@ export default function SecretAdminDashboardModal({ isOpen, onClose }: SecretAdm
                 fetchFixedCosts();
             }
             if (activeTab === 'edits') {
-                fetchEditLogs();
+                fetchSystemLogs();
             }
         }
     }, [isOpen, activeTab, currentYear, currentMonth]);
@@ -92,24 +96,28 @@ export default function SecretAdminDashboardModal({ isOpen, onClose }: SecretAdm
         } catch (e) { console.error(e); }
     };
 
-    const renderChanges = (oldD: any, newD: any) => {
-        const changes: string[] = [];
-        if (oldD.price !== newD.price) changes.push(`Цена: ${oldD.price} -> ${newD.price}`);
-        if (oldD.shoeType !== newD.shoeType) changes.push(`Изделие: ${oldD.shoeType} -> ${newD.shoeType}`);
-        if (oldD.brand !== newD.brand) changes.push(`Бренд: ${oldD.brand} -> ${newD.brand}`);
-        if (oldD.color !== newD.color) changes.push(`Цвет: ${oldD.color} -> ${newD.color}`);
-        if (oldD.quantity !== newD.quantity) changes.push(`Кол-во: ${oldD.quantity} -> ${newD.quantity}`);
-        if (oldD.services !== newD.services) changes.push(`Услуги изменены`);
-        if (oldD.comment !== newD.comment) changes.push(`Коммент изменен`);
-        const oldM = Number(oldD.masterId);
-        const newM = Number(newD.masterId);
-        if (oldM !== newM && !isNaN(newM)) changes.push(`Мастер изменен`);
-        if (changes.length === 0) return <span style={{ color: '#94a3b8' }}>Технические изменения</span>;
-        return (
-            <div style={{ fontSize: '0.85rem' }}>
-                {changes.map((c, i) => <div key={i} style={{ marginBottom: '2px' }}>• {c}</div>)}
-            </div>
-        );
+    const renderChanges = (log: SystemLog) => {
+        if (log.type === 'ORDER' && log.oldData && log.newData) {
+            const changes: string[] = [];
+            const oldD = log.oldData;
+            const newD = log.newData;
+            if (oldD.price !== newD.price) changes.push(`Цена: ${oldD.price} -> ${newD.price}`);
+            if (oldD.shoeType !== newD.shoeType) changes.push(`Изделие: ${oldD.shoeType} -> ${newD.shoeType}`);
+            if (oldD.brand !== newD.brand) changes.push(`Бренд: ${oldD.brand} -> ${newD.brand}`);
+            if (oldD.color !== newD.color) changes.push(`Цвет: ${oldD.color} -> ${newD.color}`);
+            if (oldD.quantity !== newD.quantity) changes.push(`Кол-во: ${oldD.quantity} -> ${newD.quantity}`);
+            if (oldD.status !== newD.status) changes.push(`Статус: ${oldD.status} -> ${newD.status}`);
+
+            if (changes.length === 0) return <span style={{ color: '#94a3b8' }}>{log.details}</span>;
+            return (
+                <div style={{ fontSize: '0.85rem' }}>
+                    <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>{log.details}</div>
+                    {changes.map((c, i) => <div key={i} style={{ marginBottom: '2px', color: '#60a5fa' }}>• {c}</div>)}
+                </div>
+            );
+        }
+
+        return <span style={{ color: '#f8fafc' }}>{log.details}</span>;
     };
 
     if (!isOpen) return null;
@@ -411,32 +419,44 @@ export default function SecretAdminDashboardModal({ isOpen, onClose }: SecretAdm
                                 <thead>
                                     <tr style={{ borderBottom: '1px solid #334155', textAlign: 'left' }}>
                                         <th style={{ padding: '1.25rem' }}>Дата / Время</th>
-                                        <th style={{ padding: '1.25rem' }}>Заказ</th>
-                                        <th style={{ padding: '1.25rem' }}>Изменения</th>
-                                        <th style={{ padding: '1.25rem' }}>Тип</th>
+                                        <th style={{ padding: '1.25rem' }}>Объект</th>
+                                        <th style={{ padding: '1.25rem' }}>Действие</th>
+                                        <th style={{ padding: '1.25rem' }}>Описание / Изменения</th>
+                                        <th style={{ padding: '1.25rem' }}>Исполнитель</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {editLogs.map((log) => (
+                                    {systemLogs.map((log) => (
                                         <tr key={log.id} style={{ borderBottom: '1px solid #1e293b' }}>
-                                            <td style={{ padding: '1.25rem', color: '#94a3b8' }}>
+                                            <td style={{ padding: '1.25rem', color: '#94a3b8', fontSize: '0.9rem' }}>
                                                 {new Date(log.date).toLocaleString()}
                                             </td>
-                                            <td style={{ padding: '1.25rem', fontFamily: 'monospace', fontWeight: 'bold' }}>#{log.orderNumber}</td>
-                                            <td style={{ padding: '1.25rem' }}>
-                                                {renderChanges(log.oldData, log.newData)}
+                                            <td style={{ padding: '1.25rem', fontWeight: 'bold' }}>
+                                                <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>{log.type}</div>
+                                                {log.targetId || '-'}
                                             </td>
                                             <td style={{ padding: '1.25rem' }}>
-                                                <span style={{ color: '#fb923c', background: 'rgba(251, 146, 60, 0.1)', padding: '4px 10px', borderRadius: '8px', fontSize: '0.8rem', border: '1px solid rgba(251, 146, 60, 0.2)' }}>
-                                                    Редактирование
+                                                <span style={{
+                                                    padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', border: '1px solid',
+                                                    color: log.action === 'DELETE' ? '#f87171' : log.action === 'CREATE' || log.action === 'ADD' ? '#4ade80' : '#fb923c',
+                                                    background: log.action === 'DELETE' ? 'rgba(248, 113, 113, 0.1)' : log.action === 'CREATE' || log.action === 'ADD' ? 'rgba(74, 222, 128, 0.1)' : 'rgba(251, 146, 60, 0.1)',
+                                                    borderColor: log.action === 'DELETE' ? 'rgba(248, 113, 113, 0.2)' : log.action === 'CREATE' || log.action === 'ADD' ? 'rgba(74, 222, 128, 0.2)' : 'rgba(251, 146, 60, 0.2)'
+                                                }}>
+                                                    {log.action}
                                                 </span>
+                                            </td>
+                                            <td style={{ padding: '1.25rem' }}>
+                                                {renderChanges(log)}
+                                            </td>
+                                            <td style={{ padding: '1.25rem', color: '#94a3b8' }}>
+                                                {log.operator || 'Система'}
                                             </td>
                                         </tr>
                                     ))}
-                                    {editLogs.length === 0 && (
+                                    {systemLogs.length === 0 && (
                                         <tr>
-                                            <td colSpan={4} style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>
-                                                Истории изменений нет
+                                            <td colSpan={5} style={{ padding: '4rem', textAlign: 'center', color: '#94a3b8' }}>
+                                                Истории событий нет
                                             </td>
                                         </tr>
                                     )}

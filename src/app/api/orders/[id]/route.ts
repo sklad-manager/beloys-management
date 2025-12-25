@@ -124,6 +124,17 @@ export async function PUT(
                     newData: JSON.stringify(updateData),
                     diff: `Edited via web UI`
                 }
+            }),
+            prisma.systemLog.create({
+                data: {
+                    type: 'ORDER',
+                    action: 'EDIT',
+                    targetId: currentOrder.orderNumber,
+                    details: `Заказ #${currentOrder.orderNumber} изменен`,
+                    oldData: JSON.stringify(currentOrder),
+                    newData: JSON.stringify(updateData),
+                    operator: 'Admin'
+                }
             })
         ]);
 

@@ -28,8 +28,21 @@ export async function POST(request: Request) {
             }
         });
 
+        // Log the creation
+        await prisma.systemLog.create({
+            data: {
+                type: 'MASTER',
+                action: 'ADD',
+                targetId: name,
+                details: `Добавлен новый мастер: ${name} (${percentage}%)`,
+                newData: JSON.stringify(newMaster),
+                operator: 'Admin'
+            }
+        });
+
         return NextResponse.json(newMaster);
     } catch (error) {
+        console.error(error);
         return NextResponse.json({ error: 'Failed to create master' }, { status: 500 });
     }
 }
@@ -43,9 +56,22 @@ export async function DELETE(request: Request) {
     }
 
     try {
-        await prisma.master.delete({
+        const deleted = await prisma.master.delete({
             where: { id: parseInt(id) }
         });
+
+        // Log the deletion
+        await prisma.systemLog.create({
+            data: {
+                type: 'MASTER',
+                action: 'DELETE',
+                targetId: deleted.name,
+                details: `Мастер "${deleted.name}" удален`,
+                oldData: JSON.stringify(deleted),
+                operator: 'Admin'
+            }
+        });
+
         return NextResponse.json({ success: true });
     } catch (error) {
         return NextResponse.json({ error: 'Failed to delete master' }, { status: 500 });

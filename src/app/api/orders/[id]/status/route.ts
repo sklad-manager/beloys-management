@@ -19,11 +19,30 @@ export async function PATCH(
         }
 
         const result = await prisma.$transaction(async (tx) => {
+            // 0. Get old data for logging
+            const oldOrder = await tx.order.findUnique({
+                where: { id },
+                select: { status: true, orderNumber: true }
+            });
+
             // 1. Update the order
             const order = await tx.order.update({
                 where: { id },
                 data: { status },
                 include: { master: true } // Include master to get percentage
+            });
+
+            // Log status change
+            await tx.systemLog.create({
+                data: {
+                    type: 'ORDER',
+                    action: 'STATUS_CHANGE',
+                    targetId: order.orderNumber,
+                    details: `Заказ #${order.orderNumber}: статус изменен c "${oldOrder?.status}" на "${status}"`,
+                    oldData: JSON.stringify({ status: oldOrder?.status }),
+                    newData: JSON.stringify({ status: status }),
+                    operator: 'Admin'
+                }
             });
 
             // 2. If status is 'Готово', calculate and create salary log(s)

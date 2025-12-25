@@ -42,6 +42,19 @@ export async function POST(req: Request) {
                 amount: parseFloat(amount)
             }
         });
+
+        // Log the change
+        await prisma.systemLog.create({
+            data: {
+                type: 'FIXED_COST',
+                action: 'SAVE',
+                targetId: category,
+                details: `Плановая трата "${category}" сохранена: ${amount}₴ (${month}/${year})`,
+                newData: JSON.stringify(cost),
+                operator: 'Admin'
+            }
+        });
+
         return NextResponse.json(cost);
     } catch (error) {
         return NextResponse.json({ error: 'Failed' }, { status: 500 });
@@ -54,9 +67,22 @@ export async function DELETE(req: Request) {
         const id = searchParams.get('id');
         if (!id) return NextResponse.json({ error: 'ID required' }, { status: 400 });
 
-        await prisma.fixedCost.delete({
+        const deleted = await prisma.fixedCost.delete({
             where: { id: parseInt(id) }
         });
+
+        // Log the deletion
+        await prisma.systemLog.create({
+            data: {
+                type: 'FIXED_COST',
+                action: 'DELETE',
+                targetId: deleted.category,
+                details: `Плановая трата "${deleted.category}" удалена`,
+                oldData: JSON.stringify(deleted),
+                operator: 'Admin'
+            }
+        });
+
         return NextResponse.json({ success: true });
     } catch (error) {
         return NextResponse.json({ error: 'Failed' }, { status: 500 });

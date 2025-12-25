@@ -93,6 +93,18 @@ export async function POST(req: Request) {
             }
         });
 
+        // Log the payment
+        await prisma.systemLog.create({
+            data: {
+                type: 'SALARY',
+                action: 'PAYMENT',
+                targetId: masterName,
+                details: `Выплачена зарплата мастеру ${masterName}: ${amount}₴`,
+                newData: JSON.stringify({ logIds, masterId, amount, masterName }),
+                operator: 'Admin'
+            }
+        });
+
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error('Error marking salary as paid:', error);

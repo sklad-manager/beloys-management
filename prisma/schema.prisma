@@ -161,3 +161,15 @@ model CashTransaction {
   method      String   // "Cash", "Terminal"
   relatedEntity String? // Client Name or Master Name
 }
+
+model SystemLog {
+  id        Int      @id @default(autoincrement())
+  type      String   // e.g., "ORDER", "SALARY", "STAFF", "FIXED_COST"
+  action    String   // e.g., "CREATE", "EDIT", "DELETE", "PAYMENT"
+  targetId  String?  // e.g., order Number or ID
+  details   String?  // Text description
+  oldData   String?  // JSON
+  newData   String?  // JSON
+  operator  String?  // Who performed the action
+  createdAt DateTime @default(now())
+}
