@@ -14,7 +14,8 @@ export async function GET(request: Request) {
             where: {
                 OR: [
                     { name: { contains: query, mode: 'insensitive' } },
-                    { phone: { contains: query, mode: 'insensitive' } }
+                    { phone: { contains: query, mode: 'insensitive' } },
+                    { phone2: { contains: query, mode: 'insensitive' } }
                 ]
             },
             take: 10,

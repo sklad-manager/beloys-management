@@ -61,6 +61,7 @@ export async function POST(req: Request) {
             description,
             clientName,
             phone,
+            phone2,
             shoeType,
             brand,
             color,
@@ -92,6 +93,7 @@ export async function POST(req: Request) {
                     data: {
                         name: clientName,
                         phone: phone,
+                        phone2: phone2,
                     }
                 });
                 finalClientId = newClient.id;
@@ -113,6 +115,7 @@ export async function POST(req: Request) {
                 orderNumber,
                 clientName: clientName || 'Без имени',
                 phone: phone || '',
+                phone2: phone2 || '',
                 client: finalClientId ? { connect: { id: finalClientId } } : undefined,
                 master: masterId ? { connect: { id: Number(masterId) } } : undefined,
                 shoeType: shoeType || 'Обувь',

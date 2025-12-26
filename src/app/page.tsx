@@ -303,7 +303,10 @@ export default function Home() {
                           </td>
                           <td style={{ padding: '1rem 1.5rem' }}>
                             <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{order.clientName}</div>
-                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{order.phone}</div>
+                            <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                              {order.phone}
+                              {(order as any).phone2 && ` / ${(order as any).phone2}`}
+                            </div>
                           </td>
                           <td style={{ padding: '1rem 1.5rem' }}>
                             <div style={{ color: 'var(--text-primary)' }}>{order.shoeType}</div>

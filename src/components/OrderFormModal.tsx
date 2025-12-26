@@ -15,6 +15,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId, isR
     const [formData, setFormData] = useState({
         clientName: '',
         phone: '',
+        phone2: '',
         clientId: null as number | null,
         shoeType: '',
         brand: '',
@@ -76,6 +77,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId, isR
                 setFormData({
                     clientName: data.clientName,
                     phone: data.phone,
+                    phone2: data.phone2 || '',
                     clientId: data.clientId,
                     shoeType: data.shoeType,
                     brand: data.brand,
@@ -136,6 +138,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId, isR
                 setFormData({
                     clientName: '',
                     phone: '',
+                    phone2: '',
                     clientId: null,
                     shoeType: '',
                     brand: '',
@@ -311,11 +314,19 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId, isR
         searchClients(value);
     };
 
-    const selectClient = (client: { id: number, name: string, phone: string }) => {
+    const handlePhone2Change = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value;
+        setFormData({ ...formData, phone2: value, clientId: null });
+        setFoundClient(null);
+        searchClients(value);
+    };
+
+    const selectClient = (client: { id: number, name: string, phone: string, phone2?: string }) => {
         setFormData({
             ...formData,
             clientName: client.name,
             phone: client.phone,
+            phone2: client.phone2 || '',
             clientId: client.id
         });
         setFoundClient({ id: client.id, name: client.name });
@@ -656,7 +667,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId, isR
                                     )}
                                 </div>
                                 <div>
-                                    <label style={labelStyle}>Телефон</label>
+                                    <label style={labelStyle}>Телефон 1</label>
                                     <input
                                         name="phone"
                                         placeholder="0991234567"
@@ -666,6 +677,18 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId, isR
                                         autoComplete="off"
                                         disabled={isReadOnly}
                                         required
+                                    />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Телефон 2 (доп)</label>
+                                    <input
+                                        name="phone2"
+                                        placeholder="0501234567"
+                                        style={inputStyle}
+                                        value={formData.phone2}
+                                        onChange={handlePhone2Change}
+                                        autoComplete="off"
+                                        disabled={isReadOnly}
                                     />
                                 </div>
                             </div>

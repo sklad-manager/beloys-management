@@ -69,6 +69,7 @@ model Client {
   id        Int      @id @default(autoincrement())
   name      String
   phone     String   @unique
+  phone2    String?
   notes     String?
   createdAt DateTime @default(now())
   orders    Order[]
@@ -83,6 +84,7 @@ model Order {
   // Client Info
   clientName      String
   phone           String
+  phone2          String?
   clientId        Int?
   client          Client?  @relation(fields: [clientId], references: [id])
   

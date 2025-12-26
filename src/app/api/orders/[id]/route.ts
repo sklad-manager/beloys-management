@@ -25,7 +25,8 @@ export async function GET(
         const enrichedOrder = {
             ...order,
             clientName: order.clientName || order.client?.name || 'Без имени',
-            phone: order.phone || order.client?.phone || ''
+            phone: order.phone || order.client?.phone || '',
+            phone2: order.phone2 || order.client?.phone2 || ''
         };
 
         return NextResponse.json(enrichedOrder);
@@ -47,6 +48,7 @@ export async function PUT(
         const {
             clientName,
             phone,
+            phone2,
             shoeType,
             brand,
             color,
@@ -85,6 +87,7 @@ export async function PUT(
                     data: {
                         name: clientName || 'Без имени',
                         phone: phone,
+                        phone2: phone2,
                     }
                 });
                 clientId = newClient.id;
@@ -95,6 +98,7 @@ export async function PUT(
         const updateData = {
             clientName,
             phone,
+            phone2,
             shoeType,
             brand,
             color,
