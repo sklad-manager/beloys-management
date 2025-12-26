@@ -205,8 +205,10 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId, isR
             }
 
         };
-        fetchReferences();
-    }, []);
+        if (isOpen) {
+            fetchReferences();
+        }
+    }, [isOpen]);
 
     // Auto-sum prices from services
     useEffect(() => {
