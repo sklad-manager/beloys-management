@@ -45,6 +45,11 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
     const [startDay, setStartDay] = useState(-1); // -1 = auto
     const [daysInMonth, setDaysInMonth] = useState(0); // 0 = auto
 
+    // Reference State
+    const [referenceItems, setReferenceItems] = useState<any[]>([]);
+    const [activeRefType, setActiveRefType] = useState('SHOE_TYPE');
+    const [newRefValue, setNewRefValue] = useState('');
+
     const fetchMonthConfig = async () => {
         try {
             const res = await fetch(`/api/admin/month-config?year=${currentYear}&month=${currentMonth}`);
@@ -82,6 +87,38 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
         } catch (e) { console.error(e); }
     };
 
+    const fetchReferences = async () => {
+        try {
+            const res = await fetch(`/api/references?type=${activeRefType}`);
+            if (res.ok) setReferenceItems(await res.json());
+        } catch (e) { console.error(e); }
+    };
+
+    const handleAddReference = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('/api/references', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type: activeRefType, value: newRefValue })
+            });
+            if (res.ok) {
+                setNewRefValue('');
+                fetchReferences();
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const handleDeleteReference = async (id: number) => {
+        if (!confirm('Удалить эту позицию из списка?')) return;
+        try {
+            const res = await fetch(`/api/references?id=${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                fetchReferences();
+            }
+        } catch (e) { console.error(e); }
+    };
+
     const handleAddStaff = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
@@ -108,7 +145,10 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
             fetchStaff();
             fetchShifts();
         }
-    }, [isOpen, currentMonth, currentYear, activeTab]);
+        if (activeTab === 'references') {
+            fetchReferences();
+        }
+    }, [isOpen, currentMonth, currentYear, activeTab, activeRefType]);
 
     // Deletion fix: staff wasn't refreshing correctly or had relational issues
     const handleDeleteStaff = async (id: number) => {
@@ -449,6 +489,7 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                     <button style={tabStyle(activeTab === 'masters')} onClick={() => setActiveTab('masters')}>Мастера</button>
                     <button style={tabStyle(activeTab === 'salaries')} onClick={() => { setActiveTab('salaries'); fetchSalaryLogs(); }}>Зарплаты</button>
                     <button style={tabStyle(activeTab === 'administration')} onClick={() => { setActiveTab('administration'); fetchStaff(); fetchShifts(); }}>Администрация</button>
+                    <button style={tabStyle(activeTab === 'references')} onClick={() => setActiveTab('references')}>Списки</button>
                     <button style={tabStyle(activeTab === 'archive')} onClick={() => { setActiveTab('archive'); fetchArchivedOrders(); }}>Архив</button>
                 </div>
                 <button onClick={onClose} className="btn-glass" style={{ width: '40px', height: '40px', borderRadius: '50%', fontSize: '1.2rem' }}>×</button>
@@ -766,6 +807,94 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                                     )}
                                 </tbody>
                             </table>
+                        </div>
+                    )}
+
+                    {activeTab === 'references' && (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(250px, 1fr) 3fr', gap: '20px' }}>
+                            {/* Left Sidebar for Categories */}
+                            <div style={{ background: '#f8fafc', padding: '15px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                <h4 style={{ marginTop: 0, marginBottom: '15px', color: '#64748b' }}>КАТЕГОРИИ</h4>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                    {[
+                                        { id: 'SHOE_TYPE', label: '👟 Типы обуви' },
+                                        { id: 'BRAND', label: '🏷️ Бренды' },
+                                        { id: 'COLOR', label: '🎨 Цвета' },
+                                        { id: 'SERVICE', label: '✨ Услуги' }
+                                    ].map(type => (
+                                        <button
+                                            key={type.id}
+                                            onClick={() => setActiveRefType(type.id)}
+                                            style={{
+                                                padding: '12px',
+                                                border: 'none',
+                                                borderRadius: '8px',
+                                                textAlign: 'left',
+                                                cursor: 'pointer',
+                                                background: activeRefType === type.id ? '#6366f1' : 'transparent',
+                                                color: activeRefType === type.id ? 'white' : '#1e293b',
+                                                fontWeight: '600',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            {type.label}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Right Content Area */}
+                            <div>
+                                <div style={{ marginBottom: '20px', padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                    <h3 style={{ marginTop: 0 }}>Управление списком</h3>
+                                    <form onSubmit={handleAddReference} style={{ display: 'flex', gap: '10px' }}>
+                                        <input
+                                            type="text"
+                                            placeholder="Введите новое значение..."
+                                            value={newRefValue}
+                                            onChange={(e) => setNewRefValue(e.target.value)}
+                                            style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                                            required
+                                        />
+                                        <button type="submit" style={{ padding: '10px 20px', background: '#6366f1', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                                            + Добавить
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <div style={{ background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                        <thead style={{ background: '#f1f5f9' }}>
+                                            <tr>
+                                                <th style={{ padding: '12px', textAlign: 'left' }}>Значение</th>
+                                                <th style={{ padding: '12px', textAlign: 'right' }}>Действия</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {referenceItems.map(item => (
+                                                <tr key={item.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                    <td style={{ padding: '12px' }}>{item.value}</td>
+                                                    <td style={{ padding: '12px', textAlign: 'right' }}>
+                                                        <button
+                                                            onClick={() => handleDeleteReference(item.id)}
+                                                            style={{ padding: '6px 12px', background: '#fee2e2', color: '#ef4444', border: 'none', borderRadius: '6px', cursor: 'pointer' }}
+                                                        >
+                                                            Удалить
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                            {referenceItems.length === 0 && (
+                                                <tr>
+                                                    <td colSpan={2} style={{ padding: '30px', textAlign: 'center', color: '#64748b' }}>
+                                                        Список пуст. Добавьте первое значение выше.
+                                                    </td>
+                                                </tr>
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
                         </div>
                     )}
 
