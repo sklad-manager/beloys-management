@@ -566,7 +566,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId, isR
                     margin: '0 auto 3rem auto'
                 }}>
                     <h2 style={{ fontSize: '2.2rem', color: 'var(--text-primary)', fontWeight: '800', margin: 0 }}>
-                        {isReadOnly ? `Просмотр Заказа #${orderNumber}` : (orderId ? `Редактирование #${orderNumber}` : 'Новый Заказ')}
+                        {isReadOnly ? `Просмотр Заказа #${orderNumber ? (parseInt(orderNumber) || orderNumber) : ''}` : (orderId ? `Редактирование #${orderNumber ? (parseInt(orderNumber) || orderNumber) : ''}` : 'Новый Заказ')}
                     </h2>
                     <button
                         onClick={onClose}
@@ -593,7 +593,7 @@ export default function OrderFormModal({ isOpen, onClose, onSubmit, orderId, isR
                             </div>
 
                             {/* Клиент */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.9fr 0.9fr', gap: '1rem' }}>
                                 <div style={{ position: 'relative' }}>
                                     <label style={labelStyle}>Имя клиента</label>
                                     <div style={{ display: 'flex', gap: '0.5rem' }}>

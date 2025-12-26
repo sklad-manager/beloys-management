@@ -22,6 +22,7 @@ interface ClientData {
     id: number;
     name: string;
     phone: string;
+    phone2: string | null;
     notes: string | null;
     orders: OrderHistoryItem[];
 }
@@ -173,9 +174,15 @@ export default function ClientCardModal({ isOpen, onClose, clientId, onViewOrder
                                     <div style={{ fontSize: '1.5rem', fontWeight: '700', color: 'var(--text-primary)' }}>{client.name}</div>
                                 </div>
                                 <div style={{ marginBottom: '1.5rem' }}>
-                                    <span style={labelStyle}>Телефон</span>
+                                    <span style={labelStyle}>Телефон 1</span>
                                     <div style={{ fontSize: '1.5rem', color: 'var(--accent-primary)', fontWeight: '700' }}>{client.phone}</div>
                                 </div>
+                                {client.phone2 && (
+                                    <div style={{ marginBottom: '1.5rem' }}>
+                                        <span style={labelStyle}>Телефон 2 (доп)</span>
+                                        <div style={{ fontSize: '1.5rem', color: 'var(--accent-primary)', fontWeight: '700' }}>{client.phone2}</div>
+                                    </div>
+                                )}
 
                                 <div style={{ marginTop: '2rem' }}>
                                     <label style={labelStyle}>Заметки</label>
