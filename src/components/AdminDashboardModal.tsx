@@ -49,6 +49,8 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
     const [referenceItems, setReferenceItems] = useState<any[]>([]);
     const [activeRefType, setActiveRefType] = useState('SHOE_TYPE');
     const [newRefValue, setNewRefValue] = useState('');
+    const [filteredRefSuggestions, setFilteredRefSuggestions] = useState<any[]>([]);
+    const [showRefSuggestions, setShowRefSuggestions] = useState(false);
 
     const fetchMonthConfig = async () => {
         try {
@@ -117,6 +119,19 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                 fetchReferences();
             }
         } catch (e) { console.error(e); }
+    };
+
+    const handleRefValueChange = (val: string) => {
+        setNewRefValue(val);
+        if (val.length > 0) {
+            const filtered = referenceItems.filter(item =>
+                item.value.toLowerCase().includes(val.toLowerCase())
+            );
+            setFilteredRefSuggestions(filtered);
+            setShowRefSuggestions(true);
+        } else {
+            setShowRefSuggestions(false);
+        }
     };
 
     const handleAddStaff = async (e: React.FormEvent) => {
@@ -847,16 +862,46 @@ export default function AdminDashboardModal({ isOpen, onClose }: AdminDashboardM
                             <div>
                                 <div style={{ marginBottom: '20px', padding: '20px', background: 'white', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
                                     <h3 style={{ marginTop: 0 }}>Управление списком</h3>
-                                    <form onSubmit={handleAddReference} style={{ display: 'flex', gap: '10px' }}>
-                                        <input
-                                            type="text"
-                                            placeholder="Введите новое значение..."
-                                            value={newRefValue}
-                                            onChange={(e) => setNewRefValue(e.target.value)}
-                                            style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
-                                            required
-                                        />
-                                        <button type="submit" style={{ padding: '10px 20px', background: '#6366f1', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold' }}>
+                                    <form onSubmit={handleAddReference} style={{ display: 'flex', gap: '10px', position: 'relative' }}>
+                                        <div style={{ flex: 1, position: 'relative' }}>
+                                            <input
+                                                type="text"
+                                                placeholder="Введите новое значение..."
+                                                value={newRefValue}
+                                                onChange={(e) => handleRefValueChange(e.target.value)}
+                                                onBlur={() => setTimeout(() => setShowRefSuggestions(false), 200)}
+                                                style={{ width: '100%', padding: '10px', borderRadius: '8px', border: '1px solid #cbd5e1' }}
+                                                required
+                                            />
+                                            {showRefSuggestions && filteredRefSuggestions.length > 0 && (
+                                                <ul style={{
+                                                    position: 'absolute',
+                                                    top: '100%',
+                                                    left: 0,
+                                                    right: 0,
+                                                    background: 'white',
+                                                    border: '1px solid #e2e8f0',
+                                                    borderRadius: '8px',
+                                                    boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
+                                                    zIndex: 10,
+                                                    padding: '5px 0',
+                                                    margin: '5px 0 0 0',
+                                                    listStyle: 'none',
+                                                    maxHeight: '200px',
+                                                    overflowY: 'auto'
+                                                }}>
+                                                    {filteredRefSuggestions.map(item => (
+                                                        <li
+                                                            key={item.id}
+                                                            style={{ padding: '8px 12px', cursor: 'default', color: '#64748b', fontSize: '0.9rem', borderBottom: '1px solid #f1f5f9' }}
+                                                        >
+                                                            ✨ {item.value} (уже есть)
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            )}
+                                        </div>
+                                        <button type="submit" style={{ padding: '10px 20px', background: '#6366f1', color: 'white', borderRadius: '8px', border: 'none', cursor: 'pointer', fontWeight: 'bold', height: '42px' }}>
                                             + Добавить
                                         </button>
                                     </form>
