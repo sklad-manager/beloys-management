@@ -287,7 +287,20 @@ export default function Home() {
                           className="table-row-hover transition-colors"
                           onClick={() => setSelectedOrderId(order.id === selectedOrderId ? null : order.id)}
                         >
-                          <td style={{ padding: '1rem 1.5rem', fontFamily: 'monospace', color: 'var(--text-secondary)' }}>#{order.orderNumber}</td>
+                          <td style={{ padding: '1rem 1.5rem' }}>
+                            <span style={{
+                              background: 'var(--bg-secondary)',
+                              padding: '0.4rem 0.8rem',
+                              borderRadius: '8px',
+                              fontWeight: '800',
+                              fontSize: '1.2rem',
+                              color: 'var(--accent-primary)',
+                              border: '1px solid var(--border-subtle)',
+                              boxShadow: 'var(--shadow-sm)'
+                            }}>
+                              {parseInt(order.orderNumber) || order.orderNumber}
+                            </span>
+                          </td>
                           <td style={{ padding: '1rem 1.5rem' }}>
                             <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{order.clientName}</div>
                             <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{order.phone}</div>

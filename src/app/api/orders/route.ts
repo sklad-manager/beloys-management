@@ -106,7 +106,7 @@ export async function POST(req: Request) {
         }, 0);
 
         const nextNumber = maxVal + 1;
-        const orderNumber = nextNumber.toString().padStart(6, '0');
+        const orderNumber = nextNumber.toString();
 
         const newOrder = await prisma.order.create({
             data: {
